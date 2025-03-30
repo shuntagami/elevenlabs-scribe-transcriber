@@ -3,11 +3,13 @@ import os
 import sys
 import argparse
 import json
+import math
 from io import BytesIO
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
 from elevenlabs.client import ElevenLabs
+from pydub import AudioSegment
 
 def generate_output_filename(output_dir="transcripts"):
     """日時を含む一意のファイル名を生成する"""
@@ -17,6 +19,44 @@ def generate_output_filename(output_dir="transcripts"):
     # 現在の日時を含むファイル名を生成
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     return os.path.join(output_dir, f"transcript_{timestamp}.txt")
+
+def split_audio(audio_file_path, segment_length=45*60*1000):
+    """
+    音声ファイルを指定された長さ（ミリ秒）のセグメントに分割する
+
+    Args:
+        audio_file_path (str): 音声ファイルへのパス
+        segment_length (int): セグメントの長さ（ミリ秒）
+
+    Returns:
+        list: 一時的な音声ファイルのパスのリスト
+    """
+    print(f"音声ファイルを{segment_length/60/1000}分ごとに分割しています...")
+
+    # 音声ファイルを読み込む
+    audio = AudioSegment.from_file(audio_file_path)
+
+    # 一時ディレクトリを作成
+    temp_dir = Path("temp_audio_segments")
+    temp_dir.mkdir(exist_ok=True)
+
+    # 音声を分割
+    segment_paths = []
+    total_length = len(audio)
+    num_segments = math.ceil(total_length / segment_length)
+
+    for i in range(num_segments):
+        start = i * segment_length
+        end = min((i + 1) * segment_length, total_length)
+        segment = audio[start:end]
+
+        # 一時ファイルに保存
+        segment_path = temp_dir / f"segment_{i:03d}.mp3"
+        segment.export(segment_path, format="mp3")
+        segment_paths.append(str(segment_path))
+
+    print(f"音声を{len(segment_paths)}個のセグメントに分割しました")
+    return segment_paths
 
 def transcribe_with_scribe(audio_file_path, language_code="jpn", diarize=True, tag_audio_events=True, output_format="text", output_file=None, num_speakers=2):
     """
@@ -50,6 +90,9 @@ def transcribe_with_scribe(audio_file_path, language_code="jpn", diarize=True, t
     print(f"言語: {language_code}, 話者分離: {diarize}, 音声イベントタグ: {tag_audio_events}")
     print(f"出力ファイル: {output_file}")
 
+    # 音声ファイルを10分ごとに分割
+    segment_paths = split_audio(audio_file_path)
+
     # 出力ファイルを開く
     with open(output_file, 'w', encoding='utf-8') as f:
         # ヘッダーを書き込む
@@ -68,113 +111,122 @@ def transcribe_with_scribe(audio_file_path, language_code="jpn", diarize=True, t
     client = ElevenLabs(api_key=api_key)
 
     try:
-        # ファイルの読み込み
-        with open(audio_file_path, "rb") as audio_file:
-            audio_data = BytesIO(audio_file.read())
+        # 各セグメントを処理
+        for i, segment_path in enumerate(segment_paths):
+            print(f"セグメント {i+1}/{len(segment_paths)} を処理中...")
 
-        # 文字起こしの実行
-        transcription = client.speech_to_text.convert(
-            file=audio_data,
-            model_id="scribe_v1",
-            language_code=language_code,
-            num_speakers=num_speakers,
-            diarize=diarize,
-            tag_audio_events=tag_audio_events,
-        )
+            # ファイルの読み込み
+            with open(segment_path, "rb") as audio_file:
+                audio_data = BytesIO(audio_file.read())
 
-        # 結果の処理と出力
-        if output_format == "json":
-            # JSON形式での出力
-            result = {
-                "text": transcription.text,
-                "language_code": transcription.language_code,
-                "language_probability": transcription.language_probability,
-                "words": []
-            }
+            # 文字起こしの実行
+            transcription = client.speech_to_text.convert(
+                file=audio_data,
+                model_id="scribe_v1",
+                language_code=language_code,
+                num_speakers=num_speakers,
+                diarize=diarize,
+                tag_audio_events=tag_audio_events,
+            )
 
-            for word in transcription.words:
-                word_data = {
-                    "text": word.text,
-                    "start": word.start,
-                    "end": word.end,
-                    "type": word.type
+            # 結果の処理と出力
+            if output_format == "json":
+                # JSON形式での出力（セグメントごとに追加）
+                result = {
+                    "text": transcription.text,
+                    "language_code": transcription.language_code,
+                    "language_probability": transcription.language_probability,
+                    "words": []
                 }
-                if hasattr(word, "speaker_id"):
-                    word_data["speaker_id"] = word.speaker_id
-                result["words"].append(word_data)
-
-            # JSONをファイルに書き込む
-            with open(output_file, 'a', encoding='utf-8') as f:
-                f.write(json.dumps(result, ensure_ascii=False, indent=2))
-                f.flush()
-
-            print("JSON形式での文字起こし結果をファイルに保存しました。")
-        else:
-            # テキスト形式での出力
-            if diarize:
-                # 話者ごとの発言を時系列順に整理
-                conversation = []
-                current_speaker = None
-                current_text = ""
-                current_start = 0
 
                 for word in transcription.words:
-                    # speaker_idがない場合も処理する
-                    speaker_id = getattr(word, "speaker_id", "unknown_speaker")
+                    word_data = {
+                        "text": word.text,
+                        "start": word.start,
+                        "end": word.end,
+                        "type": word.type
+                    }
+                    if hasattr(word, "speaker_id"):
+                        word_data["speaker_id"] = word.speaker_id
+                    result["words"].append(word_data)
 
-                    if current_speaker is None:
-                        # 最初の単語
-                        current_speaker = speaker_id
-                        current_text = word.text
-                        current_start = word.start
-                    elif current_speaker == speaker_id:
-                        # 同じ話者が続く場合
-                        current_text += word.text
-                    else:
-                        # 話者が変わった場合
+                # JSONをファイルに書き込む（セグメントごとに追加）
+                with open(output_file, 'a', encoding='utf-8') as f:
+                    if i > 0:
+                        f.write(",\n")
+                    f.write(json.dumps(result, ensure_ascii=False, indent=2))
+                    f.flush()
+            else:
+                # テキスト形式での出力
+                if diarize:
+                    # 話者ごとの発言を時系列順に整理
+                    conversation = []
+                    current_speaker = None
+                    current_text = ""
+                    current_start = 0
+
+                    for word in transcription.words:
+                        # speaker_idがない場合も処理する
+                        speaker_id = getattr(word, "speaker_id", "unknown_speaker")
+
+                        if current_speaker is None:
+                            # 最初の単語
+                            current_speaker = speaker_id
+                            current_text = word.text
+                            current_start = word.start
+                        elif current_speaker == speaker_id:
+                            # 同じ話者が続く場合
+                            current_text += word.text
+                        else:
+                            # 話者が変わった場合
+                            conversation.append({
+                                "speaker": current_speaker,
+                                "text": current_text,
+                                "start": current_start
+                            })
+
+                            # ファイルに書き込む
+                            with open(output_file, 'a', encoding='utf-8') as f:
+                                f.write(f"[{current_speaker}] {current_text}\n")
+                                f.flush()
+
+                            # コンソールにも表示
+                            print(f"[{current_speaker}] {current_text}")
+
+                            current_speaker = speaker_id
+                            current_text = word.text
+                            current_start = word.start
+
+                    # 最後の話者の発言を追加
+                    if current_text:
+                        speaker_label = current_speaker if current_speaker is not None else "unknown_speaker"
                         conversation.append({
-                            "speaker": current_speaker,
+                            "speaker": speaker_label,
                             "text": current_text,
                             "start": current_start
                         })
 
                         # ファイルに書き込む
                         with open(output_file, 'a', encoding='utf-8') as f:
-                            f.write(f"[{current_speaker}] {current_text}\n")
+                            f.write(f"[{speaker_label}] {current_text}\n")
                             f.flush()
 
                         # コンソールにも表示
-                        print(f"[{current_speaker}] {current_text}")
-
-                        current_speaker = speaker_id
-                        current_text = word.text
-                        current_start = word.start
-
-                # 最後の話者の発言を追加
-                if current_text:
-                    speaker_label = current_speaker if current_speaker is not None else "unknown_speaker"
-                    conversation.append({
-                        "speaker": speaker_label,
-                        "text": current_text,
-                        "start": current_start
-                    })
-
-                    # ファイルに書き込む
+                        print(f"[{speaker_label}] {current_text}")
+                else:
+                    # 話者分離がない場合は全テキストを表示
                     with open(output_file, 'a', encoding='utf-8') as f:
-                        f.write(f"[{speaker_label}] {current_text}\n")
+                        f.write(transcription.text)
                         f.flush()
 
-                    # コンソールにも表示
-                    print(f"[{speaker_label}] {current_text}")
-            else:
-                # 話者分離がない場合は全テキストを表示
-                with open(output_file, 'a', encoding='utf-8') as f:
-                    f.write(transcription.text)
-                    f.flush()
+                    print(transcription.text)
 
-                print(transcription.text)
+        # 一時ファイルを削除
+        for segment_path in segment_paths:
+            os.remove(segment_path)
+        os.rmdir("temp_audio_segments")
 
-            print(f"\n文字起こし結果をファイル '{output_file}' に保存しました。")
+        print(f"\n文字起こし結果をファイル '{output_file}' に保存しました。")
 
     except FileNotFoundError:
         print(f"エラー: ファイル '{audio_file_path}' が見つかりません。")
