@@ -60,10 +60,10 @@ def split_audio(audio_file_path, segment_length=45*60*1000):
 
 def transcribe_with_scribe(audio_file_path, language_code="jpn", tag_audio_events=True, output_format="text", output_file=None, num_speakers=2):
     """
-    指定された音声ファイルをElevenLabsのScribeモデルで文字起こしする
+    指定された音声または動画ファイルをElevenLabsのScribeモデルで文字起こしする
 
     Args:
-        audio_file_path (str): 音声ファイルへのパス
+        audio_file_path (str): 音声または動画ファイルへのパス
         language_code (str): 言語コード (例: "jpn" for 日本語, "eng" for 英語)
         tag_audio_events (bool): 音声イベントのタグ付けを有効にするかどうか
         output_format (str): 出力形式 ("text" or "json")
@@ -89,7 +89,7 @@ def transcribe_with_scribe(audio_file_path, language_code="jpn", tag_audio_event
     print(f"言語: {language_code}, 話者分離: True, 音声イベントタグ: {tag_audio_events}")
     print(f"出力ファイル: {output_file}")
 
-    # 音声ファイルを10分ごとに分割
+    # 音声または動画ファイルを分割
     segment_paths = split_audio(audio_file_path)
 
     # 出力ファイルを開く
@@ -231,7 +231,7 @@ def main():
     """
     # コマンドライン引数の処理
     parser = argparse.ArgumentParser(description="ElevenLabs Scribe による音声認識")
-    parser.add_argument("audio_file", help="文字起こしする音声ファイルのパス")
+    parser.add_argument("audio_file", help="文字起こしする音声または動画ファイルのパス（mp3, wav, mp4, webm等に対応）")
     parser.add_argument("-l", "--language", default="jpn", help="言語コード (例: jpn, eng). デフォルト: jpn")
     parser.add_argument("-e", "--no-audio-events", action="store_true", help="音声イベントのタグ付けを無効にする (デフォルト: 有効)")
     parser.add_argument("-f", "--format", choices=["text", "json"], default="text", help="出力形式 (デフォルト: text)")
