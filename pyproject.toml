@@ -11,6 +11,7 @@ python = "^3.11"
 elevenlabs = "^1.55.0"
 python-dotenv = "^1.1.0"
 pydub = "^0.25.1"
+yt-dlp = "^2025.3.31"
 
 [tool.poetry.scripts]
 transcribe = "transcriber.main:main"
