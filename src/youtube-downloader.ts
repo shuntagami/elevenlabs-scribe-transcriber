@@ -13,7 +13,7 @@ import { sanitizeFilename } from "./utils.js";
  */
 export const downloadFromYoutube = async (
   url: string,
-  outputDir = "youtube_downloads"
+  outputDir = path.join(process.env.PROJECT_ROOT || "", "youtube_downloads")
 ): Promise<string | null> => {
   try {
     // 出力ディレクトリが存在しない場合は作成

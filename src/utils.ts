@@ -4,6 +4,10 @@ import crypto from "crypto";
 import { promisify } from "util";
 import { SpeakerUtterance } from "./types.js";
 import ffmpeg from "fluent-ffmpeg";
+import dotenv from "dotenv";
+
+// .envファイルから環境変数を読み込む
+dotenv.config();
 
 // ファイル操作をPromise化
 const mkdir = promisify(fs.mkdir);
@@ -18,8 +22,12 @@ const appendFile = promisify(fs.appendFile);
 export const generateOutputFilename = async (
   outputDir = "transcripts"
 ): Promise<string> => {
+  // 絶対パスを使用
+  const workspacePath = process.env.PROJECT_ROOT || "";
+  const absoluteOutputDir = path.join(workspacePath, outputDir);
+
   // 出力ディレクトリが存在しない場合は作成
-  await mkdir(outputDir, { recursive: true });
+  await mkdir(absoluteOutputDir, { recursive: true });
 
   // 現在の日時を含むファイル名を生成
   const timestamp = new Date()
@@ -27,7 +35,7 @@ export const generateOutputFilename = async (
     .replace(/[:.]/g, "")
     .replace("T", "_")
     .slice(0, 15);
-  return path.join(outputDir, `transcript_${timestamp}.txt`);
+  return path.join(absoluteOutputDir, `transcript_${timestamp}.txt`);
 };
 
 /**
@@ -148,6 +156,14 @@ export const appendToFile = async (
   filePath: string,
   content: string
 ): Promise<void> => {
+  // ファイルのディレクトリを取得して、存在しない場合は作成
+  const directory = path.dirname(filePath);
+  try {
+    await mkdir(directory, { recursive: true });
+  } catch (err) {
+    console.error(`Failed to create directory for ${filePath}: ${err}`);
+  }
+
   await appendFile(filePath, content);
 };
 
@@ -166,8 +182,9 @@ export async function splitAudio(
     `音声ファイルを${segmentLength / 60 / 1000}分ごとに分割しています...`
   );
 
-  // 出力用の一時ディレクトリを作成
-  const tempDir = path.join(process.cwd(), "temp_audio_segments");
+  // 出力用の一時ディレクトリを作成（絶対パスで指定）
+  const workspacePath = process.env.PROJECT_ROOT || "";
+  const tempDir = path.join(workspacePath, "temp_audio_segments");
   if (!fs.existsSync(tempDir)) {
     fs.mkdirSync(tempDir, { recursive: true });
   }
