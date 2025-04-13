@@ -1,7 +1,7 @@
-import { transcribeWithScribe } from './transcriber.js';
-import { downloadFromYoutube } from './youtube-downloader.js';
-import { isYoutubeUrl } from './utils.js';
-import { TranscriptionOptions } from './types.js';
+import { transcribeWithScribe } from "./transcriber.js";
+import { downloadFromYoutube } from "./youtube-downloader.js";
+import { isYoutubeUrl } from "./utils.js";
+import { TranscriptionOptions } from "./types.js";
 
 /**
  * 指定された音声/動画ファイルまたはYouTube URLを文字起こしする
@@ -17,10 +17,12 @@ export const transcribe = async (
     // 入力がYouTubeのURLの場合、ダウンロードする
     let audioPath = input;
     if (isYoutubeUrl(input)) {
-      console.log('YouTubeのURLが検出されました。ダウンロードを開始します...');
+      console.log("YouTubeのURLが検出されました。ダウンロードを開始します...");
       const downloadedPath = await downloadFromYoutube(input);
       if (!downloadedPath) {
-        console.error('YouTubeからのダウンロードに失敗しました。処理を中止します。');
+        console.error(
+          "YouTubeからのダウンロードに失敗しました。処理を中止します。"
+        );
         return 1;
       }
       audioPath = downloadedPath;
@@ -29,12 +31,16 @@ export const transcribe = async (
     // 文字起こし処理を実行
     return await transcribeWithScribe(audioPath, options);
   } catch (error) {
-    console.error(`エラーが発生しました: ${error instanceof Error ? error.message : String(error)}`);
+    console.error(
+      `エラーが発生しました: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
     return 1;
   }
 };
 
 // モジュールのエクスポート
-export { downloadFromYoutube } from './youtube-downloader.js';
-export { transcribeWithScribe } from './transcriber.js';
-export * from './types.js';
+export { downloadFromYoutube } from "./youtube-downloader.js";
+export { transcribeWithScribe } from "./transcriber.js";
+export * from "./types.js";

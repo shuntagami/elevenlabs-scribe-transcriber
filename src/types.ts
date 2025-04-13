@@ -16,7 +16,7 @@ export interface TranscriptionResult {
 }
 
 // サポートされる出力フォーマット
-export type OutputFormat = 'text' | 'json';
+export type OutputFormat = "text" | "json";
 
 // 話者の発言
 export interface SpeakerUtterance {
