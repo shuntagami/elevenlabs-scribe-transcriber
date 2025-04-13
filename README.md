@@ -1,6 +1,7 @@
 # ElevenLabs Simple Transcriber (TypeScript 版)
 
 ElevenLabs の Scribe モデルを使用して音声ファイルや動画ファイル、YouTube の動画を文字起こしするシンプルなツールです。
+MCP サーバーとして動作させることで、Claude Desktop などの MCP クライアントと連携して音声認識を行うこともできます。
 
 ## 特徴
 
@@ -10,13 +11,9 @@ ElevenLabs の Scribe モデルを使用して音声ファイルや動画ファ�
 - 複数の言語をサポート
 - 音声ファイルと動画ファイルの両方に対応
 - YouTube の動画 URL から直接ダウンロードして文字起こし
+- MCP (Model Context Protocol) サーバー対応 - Claude Desktop などと連携可能
 
 ## インストール
-
-### 前提条件
-
-- Node.js 18.0.0 以上
-- npm 9.0.0 以上
 
 ### セットアップ
 
@@ -83,4 +80,60 @@ npm run transcribe -- 音声ファイル.mp3 --no-diarize
   --num-speakers <number>  話者数 (デフォルト: 2)
   --no-diarize             話者識別を無効にする (デフォルト: 有効)
   -h, --help               ヘルプを表示
+```
+
+## MCP サーバーとして使用する
+
+このツールは Model Context Protocol (MCP) サーバーとして動作させることができ、Claude Desktop などの MCP クライアントと連携して音声認識を行うことができます。
+
+### MCP サーバーの起動
+
+```bash
+npm run mcp-server
+```
+
+### Claude Desktop との連携方法
+
+基本的な手順:
+
+1. Claude Desktop の設定ファイル (`~/Library/Application Support/Claude/claude_desktop_config.json`) を編集
+2. MCP サーバーの設定を追加
+3. Claude Desktop を再起動
+4. Claude との会話で youtube のリンクを指定して文字起こしを頼むと MCP サーバーを勝手に使ってくれます
+
+```mermaid
+flowchart TD
+    A[Claude Desktop] -->|ツールリクエスト| B[MCP サーバー]
+    B --> C{入力タイプ}
+    C -->|YouTubeリンク| D[YouTube動画ダウンロード]
+    C -->|ローカルファイル| E[ファイル処理]
+    D --> F[ElevenLabs APIで文字起こし]
+    E --> F
+    F --> G[結果をClaudeに返す]
+    G --> A
+```
+
+### Claude Desktop の設定
+
+ElevenLabs Transcriber を Claude Desktop で使用するには:
+
+1. Claude Desktop App の設定ファイル `~/Library/Application Support/Claude/claude_desktop_config.json` をテキストエディタで開きます（ファイルが存在しない場合は作成してください）
+
+2. 以下の設定を追加します
+
+```json
+{
+  "mcpServers": {
+    "elevenlabs-transcriber": {
+      "command": "node",
+      "args": [
+        "/ABSOLUTE/PATH/TO/elevenlabs-scribe-transcriber-ts/dist/mcp-server.js"
+      ],
+      "env": {
+        "ELEVENLABS_API_KEY": "YOUR_ELEVENLABS_API_KEY",
+        "PROJECT_ROOT": "/ABSOLUTE/PATH/TO/elevenlabs-scribe-transcriber-ts"
+      }
+    }
+  }
+}
 ```
