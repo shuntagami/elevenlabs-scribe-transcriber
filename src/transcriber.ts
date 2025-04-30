@@ -184,7 +184,7 @@ export const transcribeWithScribe = async (
     });
 
     // セグメント長を45分（ミリ秒）に設定
-    const SEGMENT_LENGTH_MS = 45 * 60 * 1000;
+    const SEGMENT_LENGTH_MS = 40 * 60 * 1000;
 
     try {
       // splitAudio関数を使用して音声ファイルをセグメント分割
@@ -209,9 +209,7 @@ export const transcribeWithScribe = async (
         // 複数のセグメントを処理
         console.log(`${segmentPaths.length}個のセグメントを処理しています...`);
 
-        const transcriptionResults: TranscriptionResult[] = [];
-
-        // 各セグメントを順番に処理
+        // 各セグメントを順番に処理し、結果を直接ファイルに追記
         for (let i = 0; i < segmentPaths.length; i++) {
           const segmentPath = segmentPaths[i];
           console.log(`セグメント ${i + 1}/${segmentPaths.length} を処理中...`);
@@ -226,27 +224,14 @@ export const transcribeWithScribe = async (
             }
           );
 
-          transcriptionResults.push(segmentTranscription);
-        }
-
-        // 結果を結合
-        const mergedTranscription = mergeTranscriptions(transcriptionResults);
-
-        if (mergedTranscription) {
-          // 出力形式に応じた処理
+          // 各セグメントの結果を直接ファイルに追記
           await processTranscriptionResult(
-            mergedTranscription,
+            segmentTranscription,
             finalOutputFile,
             { outputFormat, diarize }
           );
-        } else {
-          console.error("文字起こし結果の結合に失敗しました。");
-          return 1;
-        }
 
-        // 一時ファイルのクリーンアップ
-        console.log("一時ファイルをクリーンアップしています...");
-        for (const segmentPath of segmentPaths) {
+          // 一時セグメントファイルを削除
           try {
             await unlink(segmentPath);
           } catch (error) {
