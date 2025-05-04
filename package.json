@@ -1,6 +1,6 @@
 {
   "name": "elevenlabs-scribe-transcriber",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Audio and video transcription using ElevenLabs Scribe",
   "main": "dist/index.js",
   "type": "module",
