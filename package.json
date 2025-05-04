@@ -4,6 +4,9 @@
   "description": "Audio and video transcription using ElevenLabs Scribe",
   "main": "dist/index.js",
   "type": "module",
+  "bin": {
+    "elevenlabs-scribe-transcriber": "dist/cli.js"
+  },
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",

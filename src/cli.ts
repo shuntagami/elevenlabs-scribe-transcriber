@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { program } from "commander";
 import { transcribeWithScribe } from "./transcriber.js";
 import { downloadFromYoutube } from "./youtube-downloader.js";
