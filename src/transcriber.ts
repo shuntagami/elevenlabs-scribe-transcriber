@@ -1,12 +1,9 @@
 import fs from "fs";
-import path from "path";
-import os from "os";
 import { promisify } from "util";
 import dotenv from "dotenv";
 import {
   TranscriptionOptions,
   TranscriptionResult,
-  SpeakerUtterance,
   TranscriptionWord,
 } from "./types.js";
 import {
@@ -16,39 +13,12 @@ import {
   appendToFile,
   splitAudio,
 } from "./utils.js";
-import { ElevenLabsClient, play } from "elevenlabs";
+import { ElevenLabsClient } from "elevenlabs";
 
-const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
-const unlink = promisify(fs.unlink);
-const mkdir = promisify(fs.mkdir);
 
 // .envファイルから環境変数を読み込む
 dotenv.config();
-
-/**
- * 音声ファイルの情報を取得する
- * @param audioFilePath 音声ファイルパス
- * @returns 音声ファイルの情報 (未実装の場合はnull)
- */
-const getAudioDuration = async (
-  audioFilePath: string
-): Promise<number | null> => {
-  try {
-    // ffprobeが使用可能かを確認
-    try {
-      // splitAudio関数がffprobeを使用して音声ファイルの継続時間を取得するので、
-      // ここでは実装しない
-      return null;
-    } catch (error) {
-      console.error("音声ファイルの継続時間を取得できませんでした:", error);
-      return null;
-    }
-  } catch (error) {
-    console.error("音声ファイルの継続時間を取得できませんでした:", error);
-    return null;
-  }
-};
 
 /**
  * ElevenLabsのAPIを使って一つのセグメントの文字起こしを行う
@@ -99,38 +69,6 @@ const transcribeSegment = async (
     );
     throw error;
   }
-};
-
-/**
- * 複数のトランスクリプション結果を結合する
- * @param transcriptions トランスクリプション結果の配列
- * @returns 結合されたトランスクリプション結果
- */
-const mergeTranscriptions = (
-  transcriptions: TranscriptionResult[]
-): TranscriptionResult | null => {
-  if (transcriptions.length === 0) return null;
-  if (transcriptions.length === 1) return transcriptions[0];
-
-  // 最初のトランスクリプションをベースとして使用
-  const merged: TranscriptionResult = {
-    text: "",
-    language: transcriptions[0].language,
-    language_probability: transcriptions[0].language_probability,
-    words: [],
-  };
-
-  // すべてのトランスクリプションを結合
-  for (const transcription of transcriptions) {
-    merged.text += (merged.text ? " " : "") + transcription.text;
-
-    // 単語の追加
-    if (transcription.words && Array.isArray(transcription.words)) {
-      merged.words = [...merged.words, ...transcription.words];
-    }
-  }
-
-  return merged;
 };
 
 /**
@@ -231,33 +169,19 @@ export const transcribeWithScribe = async (
             { outputFormat, diarize }
           );
 
-          // 一時セグメントファイルを削除
-          try {
-            await unlink(segmentPath);
-          } catch (error) {
-            console.warn(
-              `一時ファイル ${segmentPath} の削除に失敗しました:`,
-              error
-            );
-          }
+          // 一時セグメントファイルを残す（削除しない）
+          // try {
+          //   await unlink(segmentPath);
+          // } catch (error) {
+          //   console.warn(
+          //     `一時ファイル ${segmentPath} の削除に失敗しました:`,
+          //     error
+          //   );
+          // }
         }
       }
     } catch (error) {
       console.error("音声ファイルの分割に失敗しました:", error);
-      console.log("代替手段として、単一のファイルとして処理します。");
-
-      // エラーが発生した場合は、単一のファイルとして処理
-      const transcription = await transcribeSegment(client, audioFilePath, {
-        tagAudioEvents,
-        numSpeakers,
-        diarize,
-      });
-
-      // 出力形式に応じた処理
-      await processTranscriptionResult(transcription, finalOutputFile, {
-        outputFormat,
-        diarize,
-      });
     }
 
     console.log(
