@@ -182,7 +182,14 @@ export async function splitAudio(
     `音声ファイルを${segmentLength / 60 / 1000}分ごとに分割しています...`
   );
 
-  // 出力用の一時ディレクトリを作成（絶対パスで指定）
+  // タイムスタンプを作成
+  const timestamp = new Date()
+    .toISOString()
+    .replace(/[:.]/g, "")
+    .replace("T", "_")
+    .slice(0, 15);
+
+  // 出力用の一時ディレクトリを作成（タイムスタンプ付きで絶対パスで指定）
   const workspacePath = process.env.PROJECT_ROOT || "";
   const tempDir = path.join(workspacePath, "temp_audio_segments");
   if (!fs.existsSync(tempDir)) {
@@ -214,10 +221,10 @@ export async function splitAudio(
     return new Promise<string>((resolve, reject) => {
       // セグメントの開始時間（秒）
       const startTime = (segmentIndex * segmentLength) / 1000;
-      // 出力ファイルのパス（例: temp_audio_segments/segment_000.mp3）
+      // 出力ファイルのパス（例: temp_audio_segments/segment_000_20241101_123045.mp3）
       const segmentOutput = path.join(
         tempDir,
-        `segment_${segmentIndex.toString().padStart(3, "0")}.mp3`
+        `segment_${segmentIndex.toString().padStart(3, "0")}_${timestamp}.mp3`
       );
 
       ffmpeg(audioFilePath)
