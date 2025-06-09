@@ -133,17 +133,18 @@ export const groupBySpeaker = (words: any[]): SpeakerUtterance[] => {
  */
 export const createTranscriptionHeader = (
   filePath: string,
-  config: { 
-    diarize: boolean; 
-    tagAudioEvents: boolean; 
-    outputFormat: string; 
-    numSpeakers: number; 
-    segmentLengthMs: number; 
+  config: {
+    diarize: boolean;
+    tagAudioEvents: boolean;
+    outputFormat: string;
+    numSpeakers: number;
+    segmentLengthMs: number;
   }
 ): string => {
   const segmentLengthMinutes = Math.round(config.segmentLengthMs / 60 / 1000);
-  const numSpeakersText = config.numSpeakers > 0 ? config.numSpeakers.toString() : "自動";
-  
+  const numSpeakersText =
+    config.numSpeakers > 0 ? config.numSpeakers.toString() : "自動";
+
   return `# 文字起こし結果
 # 元ファイル: ${path.basename(filePath)}
 # 日時: ${new Date().toISOString().replace("T", " ").slice(0, 19)}
@@ -268,3 +269,20 @@ export async function splitAudio(
   console.log(`音声を${segmentPaths.length}個のセグメントに分割しました`);
   return segmentPaths;
 }
+
+export const formatTimestamp = (seconds: number): string => {
+  // Ensure non-negative value
+  const totalSeconds = Math.max(0, Math.floor(seconds));
+  const hrs = Math.floor(totalSeconds / 3600);
+  const mins = Math.floor((totalSeconds % 3600) / 60);
+  const secs = totalSeconds % 60;
+
+  if (hrs > 0) {
+    // Format as h:mm:ss when hour component exists
+    return `${hrs}:${mins.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
+  }
+  // Format as m:ss otherwise
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+};

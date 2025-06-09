@@ -7,6 +7,7 @@ import {
   createTranscriptionHeader,
   appendToFile,
   splitAudio,
+  formatTimestamp,
 } from "./utils.js";
 import { ElevenLabsClient } from "elevenlabs";
 import { TranscriptionConfig } from "./config.js";
@@ -231,7 +232,8 @@ const processTranscriptionResult = async (
 
       // ファイルに書き込む
       for (const utterance of conversation) {
-        const line = `[${utterance.speaker}] ${utterance.text}\n`;
+        const timeLabel = formatTimestamp(utterance.start);
+        const line = `[${timeLabel}] ${utterance.speaker}: ${utterance.text}\n`;
         await appendToFile(outputFile, line);
 
         // コンソールにも表示
