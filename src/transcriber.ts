@@ -35,13 +35,18 @@ const transcribeSegment = async (
   const { tagAudioEvents = true, numSpeakers = 2, diarize = true } = options;
 
   try {
-    const response = await client.speechToText.convert({
-      file: fs.createReadStream(audioFilePath),
-      model_id: "scribe_v1",
-      num_speakers: diarize ? numSpeakers : 1,
-      diarize: diarize,
-      tag_audio_events: tagAudioEvents,
-    });
+    const response = await client.speechToText.convert(
+      {
+        file: fs.createReadStream(audioFilePath),
+        model_id: "scribe_v1",
+        num_speakers: diarize ? numSpeakers : 4,
+        diarize: diarize,
+        tag_audio_events: tagAudioEvents,
+      },
+      {
+        timeoutInSeconds: 7200, // 2時間のタイムアウト
+      }
+    );
 
     // APIレスポンスから単語データを変換
     const words: TranscriptionWord[] = response.words.map((word: any) => ({
@@ -122,7 +127,7 @@ export const transcribeWithScribe = async (
     });
 
     // セグメント長を45分（ミリ秒）に設定
-    const SEGMENT_LENGTH_MS = 40 * 60 * 1000;
+    const SEGMENT_LENGTH_MS = 120 * 60 * 1000;
 
     try {
       // splitAudio関数を使用して音声ファイルをセグメント分割
