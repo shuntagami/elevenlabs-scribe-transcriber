@@ -3,6 +3,7 @@ import { program } from "commander";
 import { transcribeWithScribe } from "./transcriber.js";
 import { downloadFromYoutube } from "./youtube-downloader.js";
 import { isYoutubeUrl } from "./utils.js";
+import { TranscriptionConfig } from "./config.js";
 
 // コマンドラインプログラムの設定
 program
@@ -57,14 +58,8 @@ const main = async () => {
     }
 
     // 文字起こし処理を実行
-    const exitCode = await transcribeWithScribe(audioPath, {
-      tagAudioEvents: options.audioEvents,
-      outputFormat: options.format,
-      outputFile: options.output,
-      outputDir: options.outputDir,
-      numSpeakers: options.numSpeakers,
-      diarize: options.diarize,
-    });
+    const config = TranscriptionConfig.fromCliOptions(options);
+    const exitCode = await transcribeWithScribe(audioPath, config);
 
     process.exit(exitCode);
   } catch (error) {

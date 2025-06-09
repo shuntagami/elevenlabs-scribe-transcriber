@@ -1,0 +1,61 @@
+import dotenv from "dotenv";
+import { TranscriptionOptions } from "./types.js";
+
+dotenv.config();
+
+export class TranscriptionConfig {
+  tagAudioEvents: boolean;
+  outputFormat: "text" | "json";
+  outputFile: string | null;
+  outputDir: string;
+  numSpeakers: number;
+  diarize: boolean;
+  segmentLengthMs: number;
+
+  private constructor(options: TranscriptionOptions) {
+    this.tagAudioEvents = options.tagAudioEvents ?? true;
+    this.outputFormat = options.outputFormat ?? "text";
+    this.outputFile = options.outputFile ?? null;
+    this.outputDir = options.outputDir ?? "transcripts";
+    this.numSpeakers = options.numSpeakers ?? 0; // デフォルト値なし（0で無効化）
+    this.diarize = options.diarize ?? true;
+    this.segmentLengthMs = options.segmentLengthMs ?? 120 * 60 * 1000; // 2時間
+  }
+
+  static create(options: Partial<TranscriptionOptions> = {}): TranscriptionConfig {
+    return new TranscriptionConfig(options);
+  }
+
+  static fromCliOptions(cliOptions: any): TranscriptionConfig {
+    return TranscriptionConfig.create({
+      tagAudioEvents: cliOptions.audioEvents,
+      outputFormat: cliOptions.format,
+      outputFile: cliOptions.output,
+      outputDir: cliOptions.outputDir,
+      numSpeakers: cliOptions.numSpeakers,
+      diarize: cliOptions.diarize,
+    });
+  }
+
+  toTranscriptionOptions(): TranscriptionOptions {
+    return {
+      tagAudioEvents: this.tagAudioEvents,
+      outputFormat: this.outputFormat,
+      outputFile: this.outputFile,
+      outputDir: this.outputDir,
+      numSpeakers: this.numSpeakers,
+      diarize: this.diarize,
+      segmentLengthMs: this.segmentLengthMs,
+    };
+  }
+
+  getApiKey(): string {
+    const apiKey = process.env.ELEVENLABS_API_KEY;
+    if (!apiKey) {
+      throw new Error(
+        "ELEVENLABS_API_KEYが設定されていません。.envファイルを確認してください。"
+      );
+    }
+    return apiKey;
+  }
+}
