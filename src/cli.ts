@@ -27,7 +27,13 @@ program
     "出力ディレクトリ (デフォルト: transcripts)",
     "transcripts"
   )
-  .option("--num-speakers <number>", "話者数 (デフォルト: 2)", parseInt, 2)
+  .option("--num-speakers <number>", "話者数", (value) => {
+    const parsed = parseInt(value, 10);
+    if (isNaN(parsed) || parsed < 1) {
+      throw new Error(`無効な話者数: ${value}`);
+    }
+    return parsed;
+  })
   .option("--no-diarize", "話者識別を無効にする (デフォルト: 有効)")
   .parse(process.argv);
 
