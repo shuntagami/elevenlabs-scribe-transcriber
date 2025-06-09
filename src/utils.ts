@@ -128,19 +128,31 @@ export const groupBySpeaker = (words: any[]): SpeakerUtterance[] => {
 /**
  * 文字起こし結果のヘッダーを作成
  * @param filePath 元ファイルのパス
- * @param options トランスクリプションオプション
+ * @param config トランスクリプション設定
  * @returns ヘッダー文字列
  */
 export const createTranscriptionHeader = (
   filePath: string,
-  options: { diarize?: boolean; tagAudioEvents?: boolean }
+  config: { 
+    diarize: boolean; 
+    tagAudioEvents: boolean; 
+    outputFormat: string; 
+    numSpeakers: number; 
+    segmentLengthMs: number; 
+  }
 ): string => {
+  const segmentLengthMinutes = Math.round(config.segmentLengthMs / 60 / 1000);
+  const numSpeakersText = config.numSpeakers > 0 ? config.numSpeakers.toString() : "自動";
+  
   return `# 文字起こし結果
 # 元ファイル: ${path.basename(filePath)}
 # 日時: ${new Date().toISOString().replace("T", " ").slice(0, 19)}
-# 設定: 話者分離=${options.diarize ? "true" : "false"}, 音声イベント=${
-    options.tagAudioEvents ? "true" : "false"
-  }
+# 設定:
+#   話者分離: ${config.diarize ? "有効" : "無効"}
+#   音声イベントタグ: ${config.tagAudioEvents ? "有効" : "無効"}
+#   出力形式: ${config.outputFormat}
+#   話者数: ${numSpeakersText}
+#   セグメント長: ${segmentLengthMinutes}分
 
 ===== 話者ごとの時系列会話 =====
 

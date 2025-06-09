@@ -29,10 +29,11 @@ export interface SpeakerUtterance {
 export interface TranscriptionOptions {
   tagAudioEvents?: boolean;
   outputFormat?: OutputFormat;
-  outputFile?: string;
+  outputFile?: string | null;
   outputDir?: string;
   numSpeakers?: number;
   diarize?: boolean;
+  segmentLengthMs?: number;
 }
 
 // CLIオプション（コマンド引数）

@@ -2,6 +2,7 @@ import { transcribeWithScribe } from "./transcriber.js";
 import { downloadFromYoutube } from "./youtube-downloader.js";
 import { isYoutubeUrl } from "./utils.js";
 import { TranscriptionOptions } from "./types.js";
+import { TranscriptionConfig } from "./config.js";
 
 /**
  * 指定された音声/動画ファイルまたはYouTube URLを文字起こしする
@@ -29,7 +30,8 @@ export const transcribe = async (
     }
 
     // 文字起こし処理を実行
-    return await transcribeWithScribe(audioPath, options);
+    const config = TranscriptionConfig.create(options);
+    return await transcribeWithScribe(audioPath, config);
   } catch (error) {
     console.error(
       `エラーが発生しました: ${

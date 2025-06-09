@@ -1,11 +1,6 @@
 import fs from "fs";
 import { promisify } from "util";
-import dotenv from "dotenv";
-import {
-  TranscriptionOptions,
-  TranscriptionResult,
-  TranscriptionWord,
-} from "./types.js";
+import { TranscriptionResult, TranscriptionWord } from "./types.js";
 import {
   generateOutputFilename,
   groupBySpeaker,
@@ -14,34 +9,31 @@ import {
   splitAudio,
 } from "./utils.js";
 import { ElevenLabsClient } from "elevenlabs";
+import { TranscriptionConfig } from "./config.js";
 
 const writeFile = promisify(fs.writeFile);
-
-// .envファイルから環境変数を読み込む
-dotenv.config();
 
 /**
  * ElevenLabsのAPIを使って一つのセグメントの文字起こしを行う
  * @param client ElevenLabsクライアント
  * @param audioFilePath 音声ファイルへのパス
- * @param options 文字起こしオプション
+ * @param config 文字起こし設定
  * @returns 文字起こし結果
  */
 const transcribeSegment = async (
   client: ElevenLabsClient,
   audioFilePath: string,
-  options: TranscriptionOptions = {}
+  config: TranscriptionConfig
 ): Promise<TranscriptionResult> => {
-  const { tagAudioEvents = true, numSpeakers = 2, diarize = true } = options;
-
   try {
     const response = await client.speechToText.convert(
       {
         file: fs.createReadStream(audioFilePath),
         model_id: "scribe_v1",
-        num_speakers: diarize ? numSpeakers : 4,
-        diarize: diarize,
-        tag_audio_events: tagAudioEvents,
+        ...(config.diarize &&
+          config.numSpeakers > 0 && { num_speakers: config.numSpeakers }),
+        diarize: config.diarize,
+        tag_audio_events: config.tagAudioEvents,
       },
       {
         timeoutInSeconds: 7200, // 2時間のタイムアウト
@@ -78,46 +70,45 @@ const transcribeSegment = async (
 
 /**
  * ElevenLabsのAPIを使って文字起こしを行う
- * 音声ファイルを45分ごとのセグメントに分割して処理する
+ * 音声ファイルを設定されたセグメント長で分割して処理する
  * @param audioFilePath 音声ファイルへのパス
- * @param options 文字起こしオプション
+ * @param config 文字起こし設定
  * @returns 成功時は0、エラー時は1
  */
 export const transcribeWithScribe = async (
   audioFilePath: string,
-  options: TranscriptionOptions = {}
+  config: TranscriptionConfig
 ): Promise<number> => {
   try {
-    // デフォルト値の設定
-    const {
-      tagAudioEvents = true,
-      outputFormat = "text",
-      outputFile = null,
-      numSpeakers = 2,
-      diarize = true,
-    } = options;
-
     // APIキーを確認
-    const apiKey = process.env.ELEVENLABS_API_KEY;
-    if (!apiKey) {
-      console.error(
-        "エラー: ELEVENLABS_API_KEYが設定されていません。.envファイルを確認してください。"
-      );
+    let apiKey: string;
+    try {
+      apiKey = config.getApiKey();
+    } catch (error) {
+      console.error(error instanceof Error ? error.message : String(error));
       return 1;
     }
 
     // 出力ファイルのパスを決定
     const finalOutputFile =
-      outputFile || (await generateOutputFilename(options.outputDir));
+      config.outputFile || (await generateOutputFilename(config.outputDir));
 
     console.log(`文字起こし中: ${audioFilePath}`);
-    console.log(`話者分離: ${diarize}, 音声イベントタグ: ${tagAudioEvents}`);
+    console.log(
+      `話者分離: ${config.diarize}, 音声イベントタグ: ${config.tagAudioEvents}, 話者数: ${config.numSpeakers}`
+    );
     console.log(`出力ファイル: ${finalOutputFile}`);
 
     // 出力ファイルのヘッダーを書き込む
     await writeFile(
       finalOutputFile,
-      createTranscriptionHeader(audioFilePath, { diarize, tagAudioEvents }),
+      createTranscriptionHeader(audioFilePath, {
+        diarize: config.diarize,
+        tagAudioEvents: config.tagAudioEvents,
+        outputFormat: config.outputFormat,
+        numSpeakers: config.numSpeakers,
+        segmentLengthMs: config.segmentLengthMs,
+      }),
       "utf-8"
     );
 
@@ -126,8 +117,8 @@ export const transcribeWithScribe = async (
       apiKey: apiKey,
     });
 
-    // セグメント長を45分（ミリ秒）に設定
-    const SEGMENT_LENGTH_MS = 120 * 60 * 1000;
+    // セグメント長を設定値から取得
+    const SEGMENT_LENGTH_MS = config.segmentLengthMs;
 
     try {
       // splitAudio関数を使用して音声ファイルをセグメント分割
@@ -137,16 +128,16 @@ export const transcribeWithScribe = async (
         // セグメントが1つだけの場合、単一のファイルとして処理
         console.log("音声ファイルを単一のセグメントとして処理します。");
 
-        const transcription = await transcribeSegment(client, audioFilePath, {
-          tagAudioEvents,
-          numSpeakers,
-          diarize,
-        });
+        const transcription = await transcribeSegment(
+          client,
+          audioFilePath,
+          config
+        );
 
         // 出力形式に応じた処理
         await processTranscriptionResult(transcription, finalOutputFile, {
-          outputFormat,
-          diarize,
+          outputFormat: config.outputFormat,
+          diarize: config.diarize,
         });
       } else {
         // 複数のセグメントを処理
@@ -160,18 +151,14 @@ export const transcribeWithScribe = async (
           const segmentTranscription = await transcribeSegment(
             client,
             segmentPath,
-            {
-              tagAudioEvents,
-              numSpeakers,
-              diarize,
-            }
+            config
           );
 
           // 各セグメントの結果を直接ファイルに追記
           await processTranscriptionResult(
             segmentTranscription,
             finalOutputFile,
-            { outputFormat, diarize }
+            { outputFormat: config.outputFormat, diarize: config.diarize }
           );
 
           // 一時セグメントファイルを残す（削除しない）
