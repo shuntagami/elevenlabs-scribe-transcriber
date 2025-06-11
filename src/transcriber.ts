@@ -240,13 +240,47 @@ const processTranscriptionResult = async (
         console.log(line.trim());
       }
     } else {
-      // 話者識別なしの場合は全テキストをそのまま出力
-      // 文末の句点や感嘆符、疑問符の後に改行を追加
-      const formattedText = transcription.text.replace(/([。！？])/g, "$1\n");
-      await appendToFile(outputFile, formattedText + "\n");
+      // 話者識別なしの場合もタイムスタンプ付きで文単位に出力
 
-      // コンソールにも表示
-      console.log(formattedText);
+      // 単語リストから文単位に区切る
+      type Sentence = { text: string; start: number };
+      const sentences: Sentence[] = [];
+      let currentSentence = "";
+      let currentStart: number | null = null;
+
+      for (const word of transcription.words) {
+        // 初めの単語なら開始時刻を記録
+        if (currentSentence === "") {
+          currentStart = word.start;
+        }
+
+        currentSentence += word.text;
+
+        // 日本語の句読点や英語の文末記号で文を区切る
+        if (/^[。！？.!?]$/.test(word.text)) {
+          if (currentSentence.trim() !== "" && currentStart !== null) {
+            sentences.push({
+              text: currentSentence.trim(),
+              start: currentStart,
+            });
+          }
+          currentSentence = "";
+          currentStart = null;
+        }
+      }
+
+      // 残りがあれば追加
+      if (currentSentence.trim() !== "" && currentStart !== null) {
+        sentences.push({ text: currentSentence.trim(), start: currentStart });
+      }
+
+      // 出力
+      for (const sentence of sentences) {
+        const timeLabel = formatTimestamp(sentence.start);
+        const line = `[${timeLabel}] ${sentence.text}\n`;
+        await appendToFile(outputFile, line);
+        console.log(line.trim());
+      }
     }
   }
 };
