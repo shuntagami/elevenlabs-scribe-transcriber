@@ -22,7 +22,9 @@ export class TranscriptionConfig {
     this.segmentLengthMs = options.segmentLengthMs ?? 120 * 60 * 1000; // 2時間
   }
 
-  static create(options: Partial<TranscriptionOptions> = {}): TranscriptionConfig {
+  static create(
+    options: Partial<TranscriptionOptions> = {}
+  ): TranscriptionConfig {
     return new TranscriptionConfig(options);
   }
 
