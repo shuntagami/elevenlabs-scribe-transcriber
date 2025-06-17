@@ -35,6 +35,10 @@ program
     return parsed;
   })
   .option("--no-diarize", "話者識別を無効にする (デフォルト: 有効)")
+  .option(
+    "--no-timestamp",
+    "タイムスタンプの表示を無効にする (デフォルト: 有効)"
+  )
   .parse(process.argv);
 
 // メイン処理

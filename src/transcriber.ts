@@ -139,6 +139,7 @@ export const transcribeWithScribe = async (
         await processTranscriptionResult(transcription, finalOutputFile, {
           outputFormat: config.outputFormat,
           diarize: config.diarize,
+          showTimestamp: config.showTimestamp,
         });
       } else {
         // 複数のセグメントを処理
@@ -159,7 +160,11 @@ export const transcribeWithScribe = async (
           await processTranscriptionResult(
             segmentTranscription,
             finalOutputFile,
-            { outputFormat: config.outputFormat, diarize: config.diarize }
+            {
+              outputFormat: config.outputFormat,
+              diarize: config.diarize,
+              showTimestamp: config.showTimestamp,
+            }
           );
 
           // 一時セグメントファイルを残す（削除しない）
@@ -204,9 +209,9 @@ export const transcribeWithScribe = async (
 const processTranscriptionResult = async (
   transcription: TranscriptionResult,
   outputFile: string,
-  options: { outputFormat: string; diarize: boolean }
+  options: { outputFormat: string; diarize: boolean; showTimestamp: boolean }
 ): Promise<void> => {
-  const { outputFormat, diarize } = options;
+  const { outputFormat, diarize, showTimestamp } = options;
 
   if (outputFormat === "json") {
     // JSON形式での出力
@@ -232,8 +237,10 @@ const processTranscriptionResult = async (
 
       // ファイルに書き込む
       for (const utterance of conversation) {
-        const timeLabel = formatTimestamp(utterance.start);
-        const line = `[${timeLabel}] ${utterance.speaker}: ${utterance.text}\n`;
+        const timeLabel = showTimestamp
+          ? `[${formatTimestamp(utterance.start)}] `
+          : "";
+        const line = `${timeLabel}${utterance.speaker}: ${utterance.text}\n`;
         await appendToFile(outputFile, line);
 
         // コンソールにも表示
@@ -276,8 +283,10 @@ const processTranscriptionResult = async (
 
       // 出力
       for (const sentence of sentences) {
-        const timeLabel = formatTimestamp(sentence.start);
-        const line = `[${timeLabel}] ${sentence.text}\n`;
+        const timeLabel = showTimestamp
+          ? `[${formatTimestamp(sentence.start)}] `
+          : "";
+        const line = `${timeLabel}${sentence.text}\n`;
         await appendToFile(outputFile, line);
         console.log(line.trim());
       }

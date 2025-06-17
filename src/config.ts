@@ -11,6 +11,7 @@ export class TranscriptionConfig {
   numSpeakers: number;
   diarize: boolean;
   segmentLengthMs: number;
+  showTimestamp: boolean;
 
   private constructor(options: TranscriptionOptions) {
     this.tagAudioEvents = options.tagAudioEvents ?? true;
@@ -20,6 +21,7 @@ export class TranscriptionConfig {
     this.numSpeakers = options.numSpeakers ?? 0; // デフォルト値なし（0で無効化）
     this.diarize = options.diarize ?? true;
     this.segmentLengthMs = options.segmentLengthMs ?? 120 * 60 * 1000; // 2時間
+    this.showTimestamp = options.showTimestamp ?? true;
   }
 
   static create(
@@ -36,6 +38,7 @@ export class TranscriptionConfig {
       outputDir: cliOptions.outputDir,
       numSpeakers: cliOptions.numSpeakers,
       diarize: cliOptions.diarize,
+      showTimestamp: cliOptions.timestamp,
     });
   }
 
@@ -48,6 +51,7 @@ export class TranscriptionConfig {
       numSpeakers: this.numSpeakers,
       diarize: this.diarize,
       segmentLengthMs: this.segmentLengthMs,
+      showTimestamp: this.showTimestamp,
     };
   }
 
