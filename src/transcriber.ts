@@ -124,6 +124,7 @@ export const transcribeWithScribe = async (
     try {
       // splitAudio関数を使用して音声ファイルをセグメント分割
       const segmentPaths = await splitAudio(audioFilePath, SEGMENT_LENGTH_MS);
+      // const segmentPaths = [audioFilePath];
 
       if (segmentPaths.length <= 1) {
         // セグメントが1つだけの場合、単一のファイルとして処理
@@ -131,7 +132,7 @@ export const transcribeWithScribe = async (
 
         const transcription = await transcribeSegment(
           client,
-          audioFilePath,
+          segmentPaths[0],
           config
         );
 

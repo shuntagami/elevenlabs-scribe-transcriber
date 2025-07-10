@@ -20,7 +20,7 @@ export class TranscriptionConfig {
     this.outputDir = options.outputDir ?? "transcripts";
     this.numSpeakers = options.numSpeakers ?? 0; // デフォルト値なし（0で無効化）
     this.diarize = options.diarize ?? true;
-    this.segmentLengthMs = options.segmentLengthMs ?? 120 * 60 * 1000; // 2時間
+    this.segmentLengthMs = options.segmentLengthMs ?? 4 * 60 * 60 * 1000; // 2時間
     this.showTimestamp = options.showTimestamp ?? true;
   }
 
