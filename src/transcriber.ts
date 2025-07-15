@@ -16,7 +16,7 @@ const writeFile = promisify(fs.writeFile);
 
 /**
  * ElevenLabsのAPIを使って一つのセグメントの文字起こしを行う
- * @param client ElevenLabsクライアント
+ * @param clientenLabsクライアント
  * @param audioFilePath 音声ファイルへのパス
  * @param config 文字起こし設定
  * @returns 文字起こし結果
@@ -109,6 +109,7 @@ export const transcribeWithScribe = async (
         outputFormat: config.outputFormat,
         numSpeakers: config.numSpeakers,
         segmentLengthMs: config.segmentLengthMs,
+        youtubeMetadata: config.youtubeMetadata,
       }),
       "utf-8"
     );

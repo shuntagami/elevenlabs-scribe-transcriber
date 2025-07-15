@@ -55,20 +55,23 @@ const main = async () => {
 
     // 入力がYouTubeのURLの場合、ダウンロードする
     let audioPath = inputPath;
+    let youtubeMetadata: { title: string; url: string } | undefined;
     if (isYoutubeUrl(inputPath)) {
       console.log("YouTubeのURLが検出されました。ダウンロードを開始します...");
-      const downloadedPath = await downloadFromYoutube(inputPath);
-      if (!downloadedPath) {
+      const downloadResult = await downloadFromYoutube(inputPath);
+      if (!downloadResult) {
         console.error(
           "YouTubeからのダウンロードに失敗しました。処理を中止します。"
         );
         process.exit(1);
       }
-      audioPath = downloadedPath;
+      audioPath = downloadResult.filePath;
+      youtubeMetadata = { title: downloadResult.title, url: downloadResult.url };
     }
 
     // 文字起こし処理を実行
     const config = TranscriptionConfig.fromCliOptions(options);
+    config.youtubeMetadata = youtubeMetadata;
     const exitCode = await transcribeWithScribe(audioPath, config);
 
     process.exit(exitCode);

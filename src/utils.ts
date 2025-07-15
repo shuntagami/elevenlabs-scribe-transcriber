@@ -139,15 +139,25 @@ export const createTranscriptionHeader = (
     outputFormat: string;
     numSpeakers: number;
     segmentLengthMs: number;
+    youtubeMetadata?: { title: string; url: string };
   }
 ): string => {
   const segmentLengthMinutes = Math.round(config.segmentLengthMs / 60 / 1000);
   const numSpeakersText =
     config.numSpeakers > 0 ? config.numSpeakers.toString() : "自動";
 
-  return `# 文字起こし結果
+  let header = `# 文字起こし結果
 # 元ファイル: ${path.basename(filePath)}
-# 日時: ${new Date().toISOString().replace("T", " ").slice(0, 19)}
+# 日時: ${new Date().toISOString().replace("T", " ").slice(0, 19)}`;
+
+  // YouTubeメタデータがある場合は追加
+  if (config.youtubeMetadata) {
+    header += `
+# YouTubeタイトル: ${config.youtubeMetadata.title}
+# YouTubeリンク: ${config.youtubeMetadata.url}`;
+  }
+
+  header += `
 # 設定:
 #   話者分離: ${config.diarize ? "有効" : "無効"}
 #   音声イベントタグ: ${config.tagAudioEvents ? "有効" : "無効"}
@@ -158,6 +168,8 @@ export const createTranscriptionHeader = (
 ===== 話者ごとの時系列会話 =====
 
 `;
+
+  return header;
 };
 
 /**

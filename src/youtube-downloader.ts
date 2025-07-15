@@ -8,12 +8,12 @@ import { sanitizeFilename } from "./utils.js";
  * YouTubeの動画をMP3形式でダウンロードする
  * @param url YouTubeのURL
  * @param outputDir 出力ディレクトリ(デフォルト: youtube_downloads)
- * @returns ダウンロードしたMP3ファイルのパス、エラー時はnull
+ * @returns ダウンロードしたMP3ファイルのパスとメタデータ、エラー時はnull
  */
 export const downloadFromYoutube = async (
   url: string,
   outputDir = path.join(process.env.PROJECT_ROOT || "", "youtube_downloads")
-): Promise<string | null> => {
+): Promise<{ filePath: string; title: string; url: string } | null> => {
   try {
     // 出力ディレクトリが存在しない場合は作成
     const absoluteOutputDir = path.resolve(outputDir);
@@ -48,7 +48,7 @@ export const downloadFromYoutube = async (
         })
         .on("end", () => {
           console.log(`ダウンロード完了: ${outputPath}`);
-          resolve(outputPath);
+          resolve({ filePath: outputPath, title: videoTitle, url });
         });
     });
   } catch (error) {

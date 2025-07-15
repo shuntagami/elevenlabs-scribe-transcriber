@@ -12,6 +12,7 @@ export class TranscriptionConfig {
   diarize: boolean;
   segmentLengthMs: number;
   showTimestamp: boolean;
+  youtubeMetadata?: { title: string; url: string };
 
   private constructor(options: TranscriptionOptions) {
     this.tagAudioEvents = options.tagAudioEvents ?? true;

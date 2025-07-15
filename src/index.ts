@@ -17,20 +17,23 @@ export const transcribe = async (
   try {
     // 入力がYouTubeのURLの場合、ダウンロードする
     let audioPath = input;
+    let youtubeMetadata: { title: string; url: string } | undefined;
     if (isYoutubeUrl(input)) {
       console.log("YouTubeのURLが検出されました。ダウンロードを開始します...");
-      const downloadedPath = await downloadFromYoutube(input);
-      if (!downloadedPath) {
+      const downloadResult = await downloadFromYoutube(input);
+      if (!downloadResult) {
         console.error(
           "YouTubeからのダウンロードに失敗しました。処理を中止します。"
         );
         return 1;
       }
-      audioPath = downloadedPath;
+      audioPath = downloadResult.filePath;
+      youtubeMetadata = { title: downloadResult.title, url: downloadResult.url };
     }
 
     // 文字起こし処理を実行
     const config = TranscriptionConfig.create(options);
+    config.youtubeMetadata = youtubeMetadata;
     return await transcribeWithScribe(audioPath, config);
   } catch (error) {
     console.error(
