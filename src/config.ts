@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import { TranscriptionOptions } from "./types.js";
+import { ConfigError } from "./errors.js";
 
 dotenv.config();
 
@@ -56,7 +57,7 @@ export class TranscriptionConfig {
   getApiKey(): string {
     const apiKey = process.env.ELEVENLABS_API_KEY;
     if (!apiKey) {
-      throw new Error(
+      throw new ConfigError(
         "ELEVENLABS_API_KEYが設定されていません。.envファイルを確認してください。"
       );
     }

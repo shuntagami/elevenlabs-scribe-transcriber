@@ -4,6 +4,7 @@ import { transcribeWithScribe } from "./transcriber.js";
 import { downloadFromYoutube } from "./youtube-downloader.js";
 import { isYoutubeUrl } from "./utils.js";
 import { TranscriptionConfig } from "./config.js";
+import { ConfigError, formatErrorMessage } from "./errors.js";
 
 // コマンドラインプログラムの設定
 program
@@ -30,7 +31,7 @@ program
   .option("--num-speakers <number>", "話者数", (value) => {
     const parsed = parseInt(value, 10);
     if (isNaN(parsed) || parsed < 1) {
-      throw new Error(`無効な話者数: ${value}`);
+      throw new ConfigError(`無効な話者数: ${value}`);
     }
     return parsed;
   })
@@ -49,8 +50,7 @@ const main = async () => {
     const inputPath = program.args[0];
 
     if (!inputPath) {
-      console.error("エラー: 入力パスが指定されていません。");
-      process.exit(1);
+      throw new ConfigError("入力パスが指定されていません");
     }
 
     // 入力がYouTubeのURLの場合、ダウンロードする
@@ -60,10 +60,9 @@ const main = async () => {
       console.log("YouTubeのURLが検出されました。ダウンロードを開始します...");
       const downloadResult = await downloadFromYoutube(inputPath);
       if (!downloadResult) {
-        console.error(
-          "YouTubeからのダウンロードに失敗しました。処理を中止します。"
+        throw new Error(
+          "YouTubeからのダウンロードに失敗しました"
         );
-        process.exit(1);
       }
       audioPath = downloadResult.filePath;
       youtubeMetadata = { title: downloadResult.title, url: downloadResult.url };
@@ -76,11 +75,10 @@ const main = async () => {
 
     process.exit(exitCode);
   } catch (error) {
-    console.error(
-      `エラーが発生しました: ${
-        error instanceof Error ? error.message : String(error)
-      }`
-    );
+    console.error(formatErrorMessage(error));
+    if (process.env.DEBUG === 'true') {
+      console.error('スタックトレース:', error instanceof Error ? error.stack : error);
+    }
     process.exit(1);
   }
 };
