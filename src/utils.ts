@@ -5,13 +5,13 @@ import { promisify } from "util";
 import { SpeakerUtterance } from "./types.js";
 import ffmpeg from "fluent-ffmpeg";
 import dotenv from "dotenv";
+import { FileError } from "./errors.js";
 
 // .envファイルから環境変数を読み込む
 dotenv.config();
 
 // ファイル操作をPromise化
 const mkdir = promisify(fs.mkdir);
-const writeFile = promisify(fs.writeFile);
 const appendFile = promisify(fs.appendFile);
 
 /**
@@ -183,7 +183,10 @@ export const appendToFile = async (
   try {
     await mkdir(directory, { recursive: true });
   } catch (err) {
-    console.error(`Failed to create directory for ${filePath}: ${err}`);
+    throw new FileError(
+      `ディレクトリの作成に失敗しました: ${directory}`,
+      directory
+    );
   }
 
   await appendFile(filePath, content);
@@ -227,7 +230,10 @@ export async function splitAudio(
         }
         if (!metadata.format || typeof metadata.format.duration !== "number") {
           return reject(
-            new Error("音声ファイルの長さを取得できませんでした。")
+            new FileError(
+              "音声ファイルの長さを取得できませんでした",
+              audioFilePath
+            )
           );
         }
         resolve(metadata.format.duration * 1000); // 秒からミリ秒へ変換
@@ -270,8 +276,12 @@ export async function splitAudio(
       const segmentPath = await exportSegment(i);
       segmentPaths.push(segmentPath);
     } catch (err) {
-      console.error(`セグメント${i}の作成時にエラーが発生しました:`, err);
-      throw err;
+      const fileError = new FileError(
+        `セグメント${i}の作成に失敗しました`,
+        audioFilePath
+      );
+      console.error(fileError.message, err);
+      throw fileError;
     }
   }
 

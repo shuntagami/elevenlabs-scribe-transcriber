@@ -3,13 +3,12 @@ import { promisify } from "util";
 import { TranscriptionResult, TranscriptionWord } from "./types.js";
 import {
   generateOutputFilename,
-  groupBySpeaker,
   createTranscriptionHeader,
-  appendToFile,
-  formatTimestamp,
 } from "./utils.js";
 import { ElevenLabsClient } from "elevenlabs";
 import { TranscriptionConfig } from "./config.js";
+import { processTranscriptionResult } from "./transcription-processor.js";
+import { ApiError, formatErrorMessage, formatErrorDetails } from "./errors.js";
 
 const writeFile = promisify(fs.writeFile);
 
@@ -60,11 +59,14 @@ const transcribeSegment = async (
 
     return transcription;
   } catch (error) {
-    console.error(
-      `セグメント '${audioFilePath}' の文字起こし中にエラーが発生しました:`,
+    const apiError = new ApiError(
+      `音声ファイルの文字起こしに失敗しました: ${audioFilePath}`,
+      undefined,
       error
     );
-    throw error;
+    console.error(formatErrorMessage(apiError));
+    console.error('詳細:', formatErrorDetails(error));
+    throw apiError;
   }
 };
 
@@ -85,7 +87,7 @@ export const transcribeWithScribe = async (
     try {
       apiKey = config.getApiKey();
     } catch (error) {
-      console.error(error instanceof Error ? error.message : String(error));
+      console.error(formatErrorMessage(error));
       return 1;
     }
 
@@ -134,7 +136,8 @@ export const transcribeWithScribe = async (
         showTimestamp: config.showTimestamp,
       });
     } catch (error) {
-      console.error("音声ファイルの処理に失敗しました:", error);
+      console.error(formatErrorMessage(error));
+      throw error; // エラーを再スロー
     }
 
     console.log(
@@ -142,109 +145,11 @@ export const transcribeWithScribe = async (
     );
     return 0;
   } catch (error) {
-    if (error instanceof Error) {
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-        console.error(`エラー: ファイル '${audioFilePath}' が見つかりません。`);
-      } else {
-        console.error(`エラーが発生しました: ${error.message}`);
-      }
-    } else {
-      console.error(`予期しないエラーが発生しました: ${error}`);
+    console.error(formatErrorMessage(error));
+    if (process.env.DEBUG === 'true') {
+      console.error('スタックトレース:', formatErrorDetails(error));
     }
     return 1;
   }
 };
 
-/**
- * 文字起こし結果を処理してファイルに出力する
- * @param transcription 文字起こし結果
- * @param outputFile 出力ファイルパス
- * @param options 出力オプション
- */
-const processTranscriptionResult = async (
-  transcription: TranscriptionResult,
-  outputFile: string,
-  options: { outputFormat: string; diarize: boolean; showTimestamp: boolean }
-): Promise<void> => {
-  const { outputFormat, diarize, showTimestamp } = options;
-
-  if (outputFormat === "json") {
-    // JSON形式での出力
-    const result = {
-      text: transcription.text,
-      language_probability: transcription.language_probability,
-      words: transcription.words.map((word: TranscriptionWord) => ({
-        text: word.text,
-        start: word.start,
-        end: word.end,
-        type: word.type,
-        ...(diarize &&
-          word.speaker_id !== undefined && { speaker_id: word.speaker_id }),
-      })),
-    };
-
-    await appendToFile(outputFile, JSON.stringify(result, null, 2));
-  } else {
-    // テキスト形式での出力
-    if (diarize) {
-      // 話者ごとの発言を時系列順に整理
-      const conversation = groupBySpeaker(transcription.words);
-
-      // ファイルに書き込む
-      for (const utterance of conversation) {
-        const timeLabel = showTimestamp
-          ? `[${formatTimestamp(utterance.start)}] `
-          : "";
-        const line = `${timeLabel}${utterance.speaker}: ${utterance.text}\n`;
-        await appendToFile(outputFile, line);
-
-        // コンソールにも表示
-        console.log(line.trim());
-      }
-    } else {
-      // 話者識別なしの場合もタイムスタンプ付きで文単位に出力
-
-      // 単語リストから文単位に区切る
-      type Sentence = { text: string; start: number };
-      const sentences: Sentence[] = [];
-      let currentSentence = "";
-      let currentStart: number | null = null;
-
-      for (const word of transcription.words) {
-        // 初めの単語なら開始時刻を記録
-        if (currentSentence === "") {
-          currentStart = word.start;
-        }
-
-        currentSentence += word.text;
-
-        // 日本語の句読点や英語の文末記号で文を区切る
-        if (/^[。！？.!?]$/.test(word.text)) {
-          if (currentSentence.trim() !== "" && currentStart !== null) {
-            sentences.push({
-              text: currentSentence.trim(),
-              start: currentStart,
-            });
-          }
-          currentSentence = "";
-          currentStart = null;
-        }
-      }
-
-      // 残りがあれば追加
-      if (currentSentence.trim() !== "" && currentStart !== null) {
-        sentences.push({ text: currentSentence.trim(), start: currentStart });
-      }
-
-      // 出力
-      for (const sentence of sentences) {
-        const timeLabel = showTimestamp
-          ? `[${formatTimestamp(sentence.start)}] `
-          : "";
-        const line = `${timeLabel}${sentence.text}\n`;
-        await appendToFile(outputFile, line);
-        console.log(line.trim());
-      }
-    }
-  }
-};
