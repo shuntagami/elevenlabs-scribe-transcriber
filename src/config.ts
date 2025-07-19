@@ -10,7 +10,6 @@ export class TranscriptionConfig {
   outputDir: string;
   numSpeakers: number;
   diarize: boolean;
-  segmentLengthMs: number;
   showTimestamp: boolean;
   youtubeMetadata?: { title: string; url: string };
 
@@ -21,7 +20,6 @@ export class TranscriptionConfig {
     this.outputDir = options.outputDir ?? "transcripts";
     this.numSpeakers = options.numSpeakers ?? 0; // デフォルト値なし（0で無効化）
     this.diarize = options.diarize ?? true;
-    this.segmentLengthMs = options.segmentLengthMs ?? 4 * 60 * 60 * 1000; // 4時間
     this.showTimestamp = options.showTimestamp ?? true;
   }
 
@@ -51,7 +49,6 @@ export class TranscriptionConfig {
       outputDir: this.outputDir,
       numSpeakers: this.numSpeakers,
       diarize: this.diarize,
-      segmentLengthMs: this.segmentLengthMs,
       showTimestamp: this.showTimestamp,
     };
   }

@@ -138,11 +138,9 @@ export const createTranscriptionHeader = (
     tagAudioEvents: boolean;
     outputFormat: string;
     numSpeakers: number;
-    segmentLengthMs: number;
     youtubeMetadata?: { title: string; url: string };
   }
 ): string => {
-  const segmentLengthMinutes = Math.round(config.segmentLengthMs / 60 / 1000);
   const numSpeakersText =
     config.numSpeakers > 0 ? config.numSpeakers.toString() : "自動";
 
@@ -163,7 +161,6 @@ export const createTranscriptionHeader = (
 #   音声イベントタグ: ${config.tagAudioEvents ? "有効" : "無効"}
 #   出力形式: ${config.outputFormat}
 #   話者数: ${numSpeakersText}
-#   セグメント長: ${segmentLengthMinutes}分
 
 ===== 話者ごとの時系列会話 =====
 
