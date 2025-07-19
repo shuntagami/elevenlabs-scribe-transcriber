@@ -81,9 +81,17 @@ async function processTextOutput(
   options: ProcessingOptions
 ): Promise<void> {
   if (options.diarize) {
-    await processSpeakerBasedOutput(transcription, outputFile, options.showTimestamp);
+    await processSpeakerBasedOutput(
+      transcription,
+      outputFile,
+      options.showTimestamp
+    );
   } else {
-    await processSentenceBasedOutput(transcription, outputFile, options.showTimestamp);
+    await processSentenceBasedOutput(
+      transcription,
+      outputFile,
+      options.showTimestamp
+    );
   }
 }
 
@@ -180,7 +188,10 @@ function isSentenceEndMarker(text: string): boolean {
 /**
  * Format a sentence as a line of text
  */
-function formatSentenceLine(sentence: Sentence, showTimestamp: boolean): string {
+function formatSentenceLine(
+  sentence: Sentence,
+  showTimestamp: boolean
+): string {
   const timeLabel = showTimestamp
     ? `[${formatTimestamp(sentence.start)}] `
     : "";
