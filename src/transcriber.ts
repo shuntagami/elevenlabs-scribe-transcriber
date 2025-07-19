@@ -6,7 +6,6 @@ import {
   groupBySpeaker,
   createTranscriptionHeader,
   appendToFile,
-  splitAudio,
   formatTimestamp,
 } from "./utils.js";
 import { ElevenLabsClient } from "elevenlabs";
@@ -108,7 +107,6 @@ export const transcribeWithScribe = async (
         tagAudioEvents: config.tagAudioEvents,
         outputFormat: config.outputFormat,
         numSpeakers: config.numSpeakers,
-        segmentLengthMs: config.segmentLengthMs,
         youtubeMetadata: config.youtubeMetadata,
       }),
       "utf-8"
@@ -119,69 +117,24 @@ export const transcribeWithScribe = async (
       apiKey: apiKey,
     });
 
-    // セグメント長を設定値から取得
-    const SEGMENT_LENGTH_MS = config.segmentLengthMs;
-
     try {
-      // splitAudio関数を使用して音声ファイルをセグメント分割
-      const segmentPaths = await splitAudio(audioFilePath, SEGMENT_LENGTH_MS);
-      // const segmentPaths = [audioFilePath];
+      // 音声ファイルを分割せずに直接処理
+      console.log("音声ファイルを処理しています...");
 
-      if (segmentPaths.length <= 1) {
-        // セグメントが1つだけの場合、単一のファイルとして処理
-        console.log("音声ファイルを単一のセグメントとして処理します。");
+      const transcription = await transcribeSegment(
+        client,
+        audioFilePath,
+        config
+      );
 
-        const transcription = await transcribeSegment(
-          client,
-          segmentPaths[0],
-          config
-        );
-
-        // 出力形式に応じた処理
-        await processTranscriptionResult(transcription, finalOutputFile, {
-          outputFormat: config.outputFormat,
-          diarize: config.diarize,
-          showTimestamp: config.showTimestamp,
-        });
-      } else {
-        // 複数のセグメントを処理
-        console.log(`${segmentPaths.length}個のセグメントを処理しています...`);
-
-        // 各セグメントを順番に処理し、結果を直接ファイルに追記
-        for (let i = 0; i < segmentPaths.length; i++) {
-          const segmentPath = segmentPaths[i];
-          console.log(`セグメント ${i + 1}/${segmentPaths.length} を処理中...`);
-
-          const segmentTranscription = await transcribeSegment(
-            client,
-            segmentPath,
-            config
-          );
-
-          // 各セグメントの結果を直接ファイルに追記
-          await processTranscriptionResult(
-            segmentTranscription,
-            finalOutputFile,
-            {
-              outputFormat: config.outputFormat,
-              diarize: config.diarize,
-              showTimestamp: config.showTimestamp,
-            }
-          );
-
-          // 一時セグメントファイルを残す（削除しない）
-          // try {
-          //   await unlink(segmentPath);
-          // } catch (error) {
-          //   console.warn(
-          //     `一時ファイル ${segmentPath} の削除に失敗しました:`,
-          //     error
-          //   );
-          // }
-        }
-      }
+      // 出力形式に応じた処理
+      await processTranscriptionResult(transcription, finalOutputFile, {
+        outputFormat: config.outputFormat,
+        diarize: config.diarize,
+        showTimestamp: config.showTimestamp,
+      });
     } catch (error) {
-      console.error("音声ファイルの分割に失敗しました:", error);
+      console.error("音声ファイルの処理に失敗しました:", error);
     }
 
     console.log(

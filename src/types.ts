@@ -33,7 +33,6 @@ export interface TranscriptionOptions {
   outputDir?: string;
   numSpeakers?: number;
   diarize?: boolean;
-  segmentLengthMs?: number;
   showTimestamp?: boolean;
 }
 
