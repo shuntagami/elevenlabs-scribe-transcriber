@@ -1,7 +1,10 @@
-# ElevenLabs Simple Transcriber (TypeScript 版)
+# ElevenLabs Scribe Transcriber
 
 ElevenLabs の Scribe モデルを使用して音声ファイルや動画ファイル、YouTube の動画を文字起こしするシンプルなツールです。
 MCP サーバーとして動作させることで、Claude Desktop などの MCP クライアントと連携して音声認識を行うこともできます。
+
+[![npm version](https://badge.fury.io/js/elevenlabs-scribe-transcriber.svg)](https://www.npmjs.com/package/elevenlabs-scribe-transcriber)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## 特徴
 
@@ -15,12 +18,24 @@ MCP サーバーとして動作させることで、Claude Desktop などの MCP
 
 ## インストール
 
-### セットアップ
+### npm パッケージとしてインストール
+
+```bash
+npm install -g elevenlabs-scribe-transcriber
+```
+
+グローバルインストール後、`ELEVENLABS_API_KEY` 環境変数を設定してください：
+
+```bash
+export ELEVENLABS_API_KEY=your_api_key_here
+```
+
+### ソースコードからのセットアップ
 
 1. リポジトリをクローン：
 
 ```bash
-git clone [リポジトリURL]
+git clone https://github.com/shuntagami/elevenlabs-scribe-transcriber-ts.git
 cd elevenlabs-scribe-transcriber-ts
 ```
 
@@ -45,6 +60,30 @@ npm run build
 ```
 
 ## 使用方法
+
+### npm パッケージとしてインストールした場合
+
+```bash
+# 基本的な使い方
+elevenlabs-scribe-transcriber 音声ファイル.mp3
+
+# YouTubeの動画から文字起こし
+elevenlabs-scribe-transcriber https://www.youtube.com/watch?v=VIDEO_ID
+
+# YouTube Shorts 形式のURLにも対応
+elevenlabs-scribe-transcriber https://www.youtube.com/shorts/VIDEO_ID
+
+# 音声イベントのタグ付けを無効化
+elevenlabs-scribe-transcriber 音声ファイル.mp3 --no-audio-events
+
+# JSON形式で詳細情報を出力
+elevenlabs-scribe-transcriber 音声ファイル.mp3 --format json
+
+# 話者識別を無効化
+elevenlabs-scribe-transcriber 音声ファイル.mp3 --no-diarize
+```
+
+### ソースコードから実行する場合
 
 ```bash
 # 基本的な使い方
