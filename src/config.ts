@@ -1,8 +1,5 @@
-import dotenv from "dotenv";
 import { TranscriptionOptions } from "./types.js";
 import { ConfigError } from "./errors.js";
-
-dotenv.config();
 
 export class TranscriptionConfig {
   tagAudioEvents: boolean;

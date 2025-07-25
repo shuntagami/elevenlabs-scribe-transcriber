@@ -3,14 +3,12 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import * as path from "path";
 import * as fs from "fs/promises";
-import dotenv from "dotenv";
 
 import { transcribe } from "./index.js";
 import { isYoutubeUrl } from "./utils.js";
 import { TranscriptionOptions } from "./types.js";
 
-// .envファイルから環境変数を読み込む
-dotenv.config();
+// Environment variables are loaded via --env-file-if-exists or MCP client config
 
 // Create server instance
 const server = new McpServer({
