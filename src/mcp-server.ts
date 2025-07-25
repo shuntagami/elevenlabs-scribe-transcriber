@@ -88,7 +88,7 @@ server.tool(
         `transcription-${timestamp}.${outputFormat || "text"}`
       );
 
-      // 空のファイルを作成
+      // Create empty output file
       try {
         await fs.writeFile(tempOutputFile, "");
         console.error(`Created empty output file at: ${tempOutputFile}`);
@@ -150,22 +150,29 @@ Debug info:
         ? `YouTube video: ${input}`
         : `Audio file: ${input}`;
 
+      // Escape special characters for JSON compatibility
+      const safeTranscriptionText = transcriptionText.replace(/[\u0000-\u001f\u007f-\u009f]/g, "");
+      const safeStatusMessage = statusMessage.replace(/[\u0000-\u001f\u007f-\u009f]/g, "");
+      const safeSourceTypeMessage = sourceTypeMessage.replace(/[\u0000-\u001f\u007f-\u009f]/g, "");
+      
       return {
         content: [
           {
             type: "text",
-            text: `${statusMessage}\n${sourceTypeMessage}\n\n${transcriptionText}`,
+            text: `${safeStatusMessage}\n${safeSourceTypeMessage}\n\n${safeTranscriptionText}`,
           },
         ],
       };
     } catch (error) {
+      console.error("Detailed error:", error);
+      console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace");
       return {
         content: [
           {
             type: "text",
             text: `Error during transcription: ${
               error instanceof Error ? error.message : String(error)
-            }`,
+            }\nStack: ${error instanceof Error ? error.stack : "No stack trace"}`,
           },
         ],
       };

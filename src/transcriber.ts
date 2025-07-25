@@ -60,12 +60,12 @@ const transcribeSegment = async (
     return transcription;
   } catch (error) {
     const apiError = new ApiError(
-      `音声ファイルの文字起こしに失敗しました: ${audioFilePath}`,
+      `Failed to transcribe audio file: ${audioFilePath}`,
       undefined,
       error
     );
     console.error(formatErrorMessage(apiError));
-    console.error('詳細:', formatErrorDetails(error));
+    console.error('Details:', formatErrorDetails(error));
     throw apiError;
   }
 };
@@ -95,11 +95,11 @@ export const transcribeWithScribe = async (
     const finalOutputFile =
       config.outputFile || (await generateOutputFilename(config.outputDir));
 
-    console.log(`文字起こし中: ${audioFilePath}`);
+    console.log(`Transcribing: ${audioFilePath}`);
     console.log(
-      `話者分離: ${config.diarize}, 音声イベントタグ: ${config.tagAudioEvents}, 話者数: ${config.numSpeakers}`
+      `Speaker diarization: ${config.diarize}, Audio event tags: ${config.tagAudioEvents}, Number of speakers: ${config.numSpeakers}`
     );
-    console.log(`出力ファイル: ${finalOutputFile}`);
+    console.log(`Output file: ${finalOutputFile}`);
 
     // 出力ファイルのヘッダーを書き込む
     await writeFile(
@@ -121,7 +121,7 @@ export const transcribeWithScribe = async (
 
     try {
       // 音声ファイルを分割せずに直接処理
-      console.log("音声ファイルを処理しています...");
+      console.log("Processing audio file...");
 
       const transcription = await transcribeSegment(
         client,
@@ -141,13 +141,13 @@ export const transcribeWithScribe = async (
     }
 
     console.log(
-      `\n文字起こし結果をファイル '${finalOutputFile}' に保存しました。`
+      `\nTranscription results saved to file '${finalOutputFile}'.`
     );
     return 0;
   } catch (error) {
     console.error(formatErrorMessage(error));
     if (process.env.DEBUG === 'true') {
-      console.error('スタックトレース:', formatErrorDetails(error));
+      console.error('Stack trace:', formatErrorDetails(error));
     }
     return 1;
   }
