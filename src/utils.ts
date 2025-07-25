@@ -4,11 +4,7 @@ import crypto from "crypto";
 import { promisify } from "util";
 import { SpeakerUtterance } from "./types.js";
 import ffmpeg from "fluent-ffmpeg";
-import dotenv from "dotenv";
 import { FileError } from "./errors.js";
-
-// .envファイルから環境変数を読み込む
-dotenv.config();
 
 // ファイル操作をPromise化
 const mkdir = promisify(fs.mkdir);
