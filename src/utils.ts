@@ -137,18 +137,18 @@ export const createTranscriptionHeader = (
     youtubeMetadata?: { title: string; url: string };
   }
 ): string => {
-  let header = `元ファイル名: ${path.basename(filePath)}`;
+  let header = `Original filename: ${path.basename(filePath)}`;
 
   // YouTubeメタデータがある場合は追加
   if (config.youtubeMetadata) {
     header += `
-YouTubeタイトル: ${config.youtubeMetadata.title}
-YouTubeリンク: ${config.youtubeMetadata.url}`;
+YouTube title: ${config.youtubeMetadata.title}
+YouTube link: ${config.youtubeMetadata.url}`;
   }
 
   header += `
 
-# 文字起こし結果
+# Transcription Result
 
 `;
 
@@ -170,7 +170,7 @@ export const appendToFile = async (
     await mkdir(directory, { recursive: true });
   } catch (err) {
     throw new FileError(
-      `ディレクトリの作成に失敗しました: ${directory}`,
+      `Failed to create directory: ${directory}`,
       directory
     );
   }
@@ -190,7 +190,7 @@ export async function splitAudio(
   segmentLength: number = 45 * 60 * 1000
 ): Promise<string[]> {
   console.log(
-    `音声ファイルを${segmentLength / 60 / 1000}分ごとに分割しています...`
+    `Splitting audio file into ${segmentLength / 60 / 1000}-minute segments...`
   );
 
   // タイムスタンプを作成
@@ -217,7 +217,7 @@ export async function splitAudio(
         if (!metadata.format || typeof metadata.format.duration !== "number") {
           return reject(
             new FileError(
-              "音声ファイルの長さを取得できませんでした",
+              "Could not retrieve audio file duration",
               audioFilePath
             )
           );
@@ -263,7 +263,7 @@ export async function splitAudio(
       segmentPaths.push(segmentPath);
     } catch (err) {
       const fileError = new FileError(
-        `セグメント${i}の作成に失敗しました`,
+        `Failed to create segment ${i}`,
         audioFilePath
       );
       console.error(fileError.message, err);
@@ -271,7 +271,7 @@ export async function splitAudio(
     }
   }
 
-  console.log(`音声を${segmentPaths.length}個のセグメントに分割しました`);
+  console.log(`Audio split into ${segmentPaths.length} segments`);
   return segmentPaths;
 }
 

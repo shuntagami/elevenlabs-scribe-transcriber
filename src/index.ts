@@ -19,11 +19,11 @@ export const transcribe = async (
     let audioPath = input;
     let youtubeMetadata: { title: string; url: string } | undefined;
     if (isYoutubeUrl(input)) {
-      console.log("YouTubeのURLが検出されました。ダウンロードを開始します...");
+      console.log("YouTube URL detected. Starting download...");
       const downloadResult = await downloadFromYoutube(input);
       if (!downloadResult) {
         console.error(
-          "YouTubeからのダウンロードに失敗しました。処理を中止します。"
+          "Failed to download from YouTube. Stopping process."
         );
         return 1;
       }
@@ -37,7 +37,7 @@ export const transcribe = async (
     return await transcribeWithScribe(audioPath, config);
   } catch (error) {
     console.error(
-      `エラーが発生しました: ${
+      `Error occurred: ${
         error instanceof Error ? error.message : String(error)
       }`
     );

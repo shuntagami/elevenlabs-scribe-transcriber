@@ -18,12 +18,12 @@ export const downloadFromYoutube = async (
     // 出力ディレクトリが存在しない場合は作成
     const absoluteOutputDir = path.resolve(outputDir);
     fs.mkdirSync(absoluteOutputDir, { recursive: true });
-    console.log(`出力ディレクトリ: ${absoluteOutputDir}`);
+    console.log(`Output directory: ${absoluteOutputDir}`);
 
     // 動画情報を取得
     const info = await ytdl.getInfo(url);
     const videoTitle = info.videoDetails.title;
-    console.log(`動画タイトル: ${videoTitle}`);
+    console.log(`Video title: ${videoTitle}`);
 
     // 安全なファイル名を生成
     const safeFilename = sanitizeFilename(`${videoTitle}.mp3`);
@@ -42,18 +42,18 @@ export const downloadFromYoutube = async (
         .save(outputPath)
         .on("error", (err) => {
           console.error(
-            `YouTube動画のダウンロード中にエラーが発生しました41: ${err.message}`
+            `Error occurred during YouTube video download: ${err.message}`
           );
           reject(err);
         })
         .on("end", () => {
-          console.log(`ダウンロード完了: ${outputPath}`);
+          console.log(`Download completed: ${outputPath}`);
           resolve({ filePath: outputPath, title: videoTitle, url });
         });
     });
   } catch (error) {
     console.error(
-      `YouTubeからのダウンロード中にエラーが発生しました: ${
+      `Error occurred during YouTube download: ${
         error instanceof Error ? error.message : String(error)
       }`
     );

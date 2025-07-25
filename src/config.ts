@@ -55,7 +55,7 @@ export class TranscriptionConfig {
     const apiKey = process.env.ELEVENLABS_API_KEY;
     if (!apiKey) {
       throw new ConfigError(
-        "ELEVENLABS_API_KEYが設定されていません。.envファイルを確認してください。"
+"ELEVENLABS_API_KEY is not set. Please check your .env file."
       );
     }
     return apiKey;

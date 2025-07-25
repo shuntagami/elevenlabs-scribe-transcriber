@@ -9,36 +9,36 @@ import { ConfigError, formatErrorMessage } from "./errors.js";
 // コマンドラインプログラムの設定
 program
   .name("transcribe")
-  .description("ElevenLabs Scribe による音声認識")
+  .description("Audio transcription using ElevenLabs Scribe")
   .argument(
     "<input-path>",
-    "文字起こしする音声または動画ファイルのパス、もしくはYouTubeのURL"
+    "Path to audio or video file to transcribe, or YouTube URL"
   )
   .option(
     "-e, --no-audio-events",
-    "音声イベントのタグ付けを無効にする (デフォルト: 有効)"
+    "Disable audio event tagging (default: enabled)"
   )
-  .option("-f, --format <format>", "出力形式", /^(text|json)$/i, "text")
+  .option("-f, --format <format>", "Output format", /^(text|json)$/i, "text")
   .option(
     "-o, --output <file>",
-    "出力ファイルのパス (指定しない場合は自動生成)"
+    "Output file path (auto-generated if not specified)"
   )
   .option(
     "--output-dir <dir>",
-    "出力ディレクトリ (デフォルト: transcripts)",
+    "Output directory (default: transcripts)",
     "transcripts"
   )
-  .option("--num-speakers <number>", "話者数", (value) => {
+  .option("--num-speakers <number>", "Number of speakers", (value) => {
     const parsed = parseInt(value, 10);
     if (isNaN(parsed) || parsed < 1) {
-      throw new ConfigError(`無効な話者数: ${value}`);
+      throw new ConfigError(`Invalid number of speakers: ${value}`);
     }
     return parsed;
   })
-  .option("--no-diarize", "話者識別を無効にする (デフォルト: 有効)")
+  .option("--no-diarize", "Disable speaker identification (default: enabled)")
   .option(
     "--no-timestamp",
-    "タイムスタンプの表示を無効にする (デフォルト: 有効)"
+    "Disable timestamp display (default: enabled)"
   )
   .parse(process.argv);
 
@@ -50,18 +50,18 @@ const main = async () => {
     const inputPath = program.args[0];
 
     if (!inputPath) {
-      throw new ConfigError("入力パスが指定されていません");
+      throw new ConfigError("Input path not specified");
     }
 
     // 入力がYouTubeのURLの場合、ダウンロードする
     let audioPath = inputPath;
     let youtubeMetadata: { title: string; url: string } | undefined;
     if (isYoutubeUrl(inputPath)) {
-      console.log("YouTubeのURLが検出されました。ダウンロードを開始します...");
+      console.log("YouTube URL detected. Starting download...");
       const downloadResult = await downloadFromYoutube(inputPath);
       if (!downloadResult) {
         throw new Error(
-          "YouTubeからのダウンロードに失敗しました"
+          "Failed to download from YouTube"
         );
       }
       audioPath = downloadResult.filePath;
@@ -77,7 +77,7 @@ const main = async () => {
   } catch (error) {
     console.error(formatErrorMessage(error));
     if (process.env.DEBUG === 'true') {
-      console.error('スタックトレース:', error instanceof Error ? error.stack : error);
+      console.error('Stack trace:', error instanceof Error ? error.stack : error);
     }
     process.exit(1);
   }
