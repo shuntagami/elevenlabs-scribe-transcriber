@@ -30,7 +30,7 @@ export const generateOutputFilename = async (
     .toISOString()
     .replace(/[:.]/g, "")
     .replace("T", "_")
-    .slice(0, 15);
+    .slice(0, 19);
   return path.join(absoluteOutputDir, `transcript_${timestamp}.txt`);
 };
 
@@ -198,7 +198,7 @@ export async function splitAudio(
     .toISOString()
     .replace(/[:.]/g, "")
     .replace("T", "_")
-    .slice(0, 15);
+    .slice(0, 19);
 
   // 出力用の一時ディレクトリを作成（タイムスタンプ付きで絶対パスで指定）
   const workspacePath = process.env.PROJECT_ROOT || "";
