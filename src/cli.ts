@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 import { program } from "commander";
+import path from "path";
 import { transcribeWithScribe } from "./transcriber.js";
 import { downloadFromYoutube } from "./youtube-downloader.js";
 import { isYoutubeUrl } from "./utils.js";
 import { TranscriptionConfig } from "./config.js";
 import { ConfigError, formatErrorMessage } from "./errors.js";
+import { convertVideoToAudio, isVideoFile } from "./media-converter.js";
 
 // コマンドラインプログラムの設定
 program
@@ -55,6 +57,7 @@ const main = async () => {
 
     // 入力がYouTubeのURLの場合、ダウンロードする
     let audioPath = inputPath;
+    let originalFilename = path.basename(inputPath);
     let youtubeMetadata: { title: string; url: string } | undefined;
     if (isYoutubeUrl(inputPath)) {
       console.log("YouTube URL detected. Starting download...");
@@ -68,9 +71,19 @@ const main = async () => {
       youtubeMetadata = { title: downloadResult.title, url: downloadResult.url };
     }
 
+    // 動画ファイルの場合、音声(MP3)に変換
+    if (isVideoFile(audioPath)) {
+      console.log("Video file detected. Converting to audio...");
+      const convertedPath = await convertVideoToAudio(audioPath);
+      // 元の動画ファイル名を保持しつつ、変換された音声ファイル名を表示用に使用
+      originalFilename = path.basename(inputPath); // 元の動画ファイル名を保持
+      audioPath = convertedPath;
+    }
+
     // 文字起こし処理を実行
     const config = TranscriptionConfig.fromCliOptions(options);
     config.youtubeMetadata = youtubeMetadata;
+    config.originalFilename = originalFilename;
     const exitCode = await transcribeWithScribe(audioPath, config);
 
     process.exit(exitCode);
