@@ -1,10 +1,7 @@
 import fs from "fs";
 import { promisify } from "util";
 import { TranscriptionResult, TranscriptionWord } from "./types.js";
-import {
-  generateOutputFilename,
-  createTranscriptionHeader,
-} from "./utils.js";
+import { generateOutputFilename, createTranscriptionHeader } from "./utils.js";
 import { ElevenLabsClient } from "elevenlabs";
 import { TranscriptionConfig } from "./config.js";
 import { processTranscriptionResult } from "./transcription-processor.js";
@@ -65,7 +62,7 @@ const transcribeSegment = async (
       error
     );
     console.error(formatErrorMessage(apiError));
-    console.error('Details:', formatErrorDetails(error));
+    console.error("Details:", formatErrorDetails(error));
     throw apiError;
   }
 };
@@ -104,12 +101,13 @@ export const transcribeWithScribe = async (
     // 出力ファイルのヘッダーを書き込む
     await writeFile(
       finalOutputFile,
-      createTranscriptionHeader(audioFilePath, {
+      createTranscriptionHeader(config.originalFilename || audioFilePath, {
         diarize: config.diarize,
         tagAudioEvents: config.tagAudioEvents,
         outputFormat: config.outputFormat,
         numSpeakers: config.numSpeakers,
         youtubeMetadata: config.youtubeMetadata,
+        originalFilename: config.originalFilename,
       }),
       "utf-8"
     );
@@ -140,16 +138,13 @@ export const transcribeWithScribe = async (
       throw error; // エラーを再スロー
     }
 
-    console.log(
-      `\nTranscription results saved to file '${finalOutputFile}'.`
-    );
+    console.log(`\nTranscription results saved to file '${finalOutputFile}'.`);
     return 0;
   } catch (error) {
     console.error(formatErrorMessage(error));
-    if (process.env.DEBUG === 'true') {
-      console.error('Stack trace:', formatErrorDetails(error));
+    if (process.env.DEBUG === "true") {
+      console.error("Stack trace:", formatErrorDetails(error));
     }
     return 1;
   }
 };
-
