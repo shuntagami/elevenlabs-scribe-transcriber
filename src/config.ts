@@ -10,6 +10,7 @@ export class TranscriptionConfig {
   diarize: boolean;
   showTimestamp: boolean;
   youtubeMetadata?: { title: string; url: string };
+  originalFilename?: string;
 
   private constructor(options: TranscriptionOptions) {
     this.tagAudioEvents = options.tagAudioEvents ?? true;
@@ -19,6 +20,7 @@ export class TranscriptionConfig {
     this.numSpeakers = options.numSpeakers ?? 0; // デフォルト値なし（0で無効化）
     this.diarize = options.diarize ?? true;
     this.showTimestamp = options.showTimestamp ?? true;
+    this.originalFilename = options.originalFilename;
   }
 
   static create(
