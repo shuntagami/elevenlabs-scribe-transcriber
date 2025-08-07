@@ -1,3 +1,4 @@
+import path from "path";
 import { transcribeWithScribe } from "./transcriber.js";
 import { downloadFromYoutube } from "./youtube-downloader.js";
 import { isYoutubeUrl } from "./utils.js";
@@ -17,6 +18,7 @@ export const transcribe = async (
   try {
     // 入力がYouTubeのURLの場合、ダウンロードする
     let audioPath = input;
+    let originalFilename = path.basename(input);
     let youtubeMetadata: { title: string; url: string } | undefined;
     if (isYoutubeUrl(input)) {
       console.log("YouTube URL detected. Starting download...");
@@ -34,6 +36,7 @@ export const transcribe = async (
     // 文字起こし処理を実行
     const config = TranscriptionConfig.create(options);
     config.youtubeMetadata = youtubeMetadata;
+    config.originalFilename = originalFilename;
     return await transcribeWithScribe(audioPath, config);
   } catch (error) {
     console.error(

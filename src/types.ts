@@ -34,6 +34,7 @@ export interface TranscriptionOptions {
   numSpeakers?: number;
   diarize?: boolean;
   showTimestamp?: boolean;
+  originalFilename?: string;
 }
 
 // CLIオプション（コマンド引数）

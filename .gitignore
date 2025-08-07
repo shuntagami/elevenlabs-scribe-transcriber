@@ -1,4 +1,4 @@
 transcripts/
 *.mp3
-youtube_downloads/
+tmp_audio_data/
 dist/

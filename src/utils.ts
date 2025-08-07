@@ -135,9 +135,10 @@ export const createTranscriptionHeader = (
     outputFormat: string;
     numSpeakers: number;
     youtubeMetadata?: { title: string; url: string };
+    originalFilename?: string;
   }
 ): string => {
-  let header = `Original filename: ${path.basename(filePath)}`;
+  let header = `Original filename: ${config.originalFilename ? path.basename(config.originalFilename) : path.basename(filePath)}`;
 
   // YouTubeメタデータがある場合は追加
   if (config.youtubeMetadata) {

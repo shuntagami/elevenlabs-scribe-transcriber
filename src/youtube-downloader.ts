@@ -7,12 +7,12 @@ import { sanitizeFilename } from "./utils.js";
 /**
  * YouTubeの動画をMP3形式でダウンロードする
  * @param url YouTubeのURL
- * @param outputDir 出力ディレクトリ(デフォルト: youtube_downloads)
+ * @param outputDir 出力ディレクトリ(デフォルト: tmp_audio_data)
  * @returns ダウンロードしたMP3ファイルのパスとメタデータ、エラー時はnull
  */
 export const downloadFromYoutube = async (
   url: string,
-  outputDir = path.join(process.env.PROJECT_ROOT || "", "youtube_downloads")
+  outputDir = path.join(process.env.PROJECT_ROOT || "", "tmp_audio_data")
 ): Promise<{ filePath: string; title: string; url: string } | null> => {
   try {
     // 出力ディレクトリが存在しない場合は作成
