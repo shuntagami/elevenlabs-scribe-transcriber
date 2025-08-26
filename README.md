@@ -35,8 +35,8 @@ export ELEVENLABS_API_KEY=your_api_key_here
 1. リポジトリをクローン：
 
 ```bash
-git clone https://github.com/shuntagami/elevenlabs-scribe-transcriber-ts.git
-cd elevenlabs-scribe-transcriber-ts
+git clone https://github.com/shuntagami/elevenlabs-scribe-transcriber.git
+cd elevenlabs-scribe-transcriber
 ```
 
 2. 依存関係をインストール：
@@ -166,11 +166,11 @@ ElevenLabs Transcriber を Claude Desktop で使用するには:
     "elevenlabs-transcriber": {
       "command": "node",
       "args": [
-        "/ABSOLUTE/PATH/TO/elevenlabs-scribe-transcriber-ts/dist/mcp-server.js"
+        "/ABSOLUTE/PATH/TO/elevenlabs-scribe-transcriber/dist/mcp-server.js"
       ],
       "env": {
         "ELEVENLABS_API_KEY": "YOUR_ELEVENLABS_API_KEY",
-        "PROJECT_ROOT": "/ABSOLUTE/PATH/TO/elevenlabs-scribe-transcriber-ts"
+        "PROJECT_ROOT": "/ABSOLUTE/PATH/TO/elevenlabs-scribe-transcriber"
       }
     }
   }
