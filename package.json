@@ -33,7 +33,6 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@distube/ytdl-core": "^4.16.12",
     "@modelcontextprotocol/sdk": "^1.17.0",
     "commander": "^14.0.0",
     "elevenlabs": "^1.59.0",

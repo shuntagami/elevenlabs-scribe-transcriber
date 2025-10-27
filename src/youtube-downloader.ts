@@ -1,8 +1,10 @@
-import fs from "fs";
-import path from "path";
-import ytdl from "@distube/ytdl-core";
-import ffmpeg from "fluent-ffmpeg";
-import { sanitizeFilename } from "./utils.js";
+import fs from 'fs';
+import path from 'path';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import { sanitizeFilename } from './utils.js';
+
+const execAsync = promisify(exec);
 
 /**
  * YouTubeの動画をMP3形式でダウンロードする
@@ -12,7 +14,7 @@ import { sanitizeFilename } from "./utils.js";
  */
 export const downloadFromYoutube = async (
   url: string,
-  outputDir = path.join(process.env.PROJECT_ROOT || "", "tmp_audio_data")
+  outputDir = path.join(process.env.PROJECT_ROOT || '', 'tmp_audio_data')
 ): Promise<{ filePath: string; title: string; url: string } | null> => {
   try {
     // 出力ディレクトリが存在しない場合は作成
@@ -20,37 +22,33 @@ export const downloadFromYoutube = async (
     fs.mkdirSync(absoluteOutputDir, { recursive: true });
     console.log(`Output directory: ${absoluteOutputDir}`);
 
-    // 動画情報を取得
-    const info = await ytdl.getInfo(url);
-    const videoTitle = info.videoDetails.title;
+    // yt-dlpがインストールされているか確認
+    try {
+      await execAsync('yt-dlp --version');
+    } catch (err) {
+      throw new Error('yt-dlp is not installed. Please install it: brew install yt-dlp');
+    }
+
+    // 動画タイトルを取得
+    console.log('Fetching video info...');
+    const { stdout: titleOutput } = await execAsync(
+      `yt-dlp --get-title "${url}"`
+    );
+    const videoTitle = titleOutput.trim();
     console.log(`Video title: ${videoTitle}`);
 
     // 安全なファイル名を生成
     const safeFilename = sanitizeFilename(`${videoTitle}.mp3`);
     const outputPath = path.join(absoluteOutputDir, safeFilename);
 
-    // ytdl-coreでストリームを取得
-    const videoStream = ytdl(url, {
-      quality: "highestaudio",
-      filter: "audioonly",
-    });
+    // yt-dlpでダウンロードしてffmpegでMP3に変換
+    console.log('Downloading and converting to MP3...');
+    const command = `yt-dlp -f "bestaudio" --extract-audio --audio-format mp3 --audio-quality 192K -o "${outputPath.replace('.mp3', '.%(ext)s')}" "${url}"`;
 
-    // ffmpegでMP3に変換
-    return new Promise((resolve, reject) => {
-      ffmpeg(videoStream)
-        .audioBitrate(192)
-        .save(outputPath)
-        .on("error", (err) => {
-          console.error(
-            `Error occurred during YouTube video download: ${err.message}`
-          );
-          reject(err);
-        })
-        .on("end", () => {
-          console.log(`Download completed: ${outputPath}`);
-          resolve({ filePath: outputPath, title: videoTitle, url });
-        });
-    });
+    await execAsync(command);
+
+    console.log(`Download completed: ${outputPath}`);
+    return { filePath: outputPath, title: videoTitle, url };
   } catch (error) {
     console.error(
       `Error occurred during YouTube download: ${
